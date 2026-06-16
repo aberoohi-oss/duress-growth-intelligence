@@ -1,7 +1,7 @@
 console.log('[startup] process.version:', process.version);
 console.log('[startup] NODE_ENV:', process.env.NODE_ENV);
 console.log('[startup] loading dotenv...');
-require('dotenv').config();
+require('dotenv').config({ override: false });
 console.log('[startup] dotenv loaded, PORT env:', process.env.PORT);
 
 const express = require('express');
