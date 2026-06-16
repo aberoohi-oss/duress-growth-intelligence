@@ -94,7 +94,7 @@ cron.schedule('*/30 * * * *', () => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 console.log('[startup] calling app.listen on PORT:', PORT);
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log('[startup] listen callback fired — server is up on port', PORT);
   logger.info(`Duress Growth Command running at http://localhost:${PORT}`, {
     env: process.env.NODE_ENV,
