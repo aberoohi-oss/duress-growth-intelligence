@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Duress Growth Command</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
+<header class="header" id="appHeader">
+  <div class="header-left">
+    <img src="/dgi.svg" alt="Duress Growth Intelligence" class="nav-logo" />
+  </div>
+  <div class="header-right">
+    <div class="source-badges">
+      <span class="badge" id="badgeGoogle" title="Google Ads">G</span>
+      <span class="badge" id="badgeBing"   title="Microsoft Ads">B</span>
+      <span class="badge" id="badgeHubspot" title="HubSpot">H</span>
+    </div>
+    <span id="lastRefreshed" class="refresh-time">—</span>
+    <button class="btn-icon" id="btnRefresh" title="Force refresh">↺</button>
+  </div>
+</header>
+
+<!-- ── Filter Bar ──────────────────────────────────────────────────────── -->
+<div class="filter-bar" id="filterBar">
+
+  <!-- Mobile compact row -->
+  <div class="filter-mobile-row">
+    <span class="mobile-period-label" id="mobilePeriodLabel">This Month</span>
+    <button class="btn-mobile-filters" id="btnMobileFilters">
+      Filters
+      <span class="filter-badge hidden" id="filterBadge">0</span>
+    </button>
+  </div>
+
+  <!-- Full panel (always visible on desktop, toggled on mobile) -->
+  <div class="filter-panel" id="filterPanel">
+    <div class="filter-row">
+
+      <!-- Period -->
+      <div class="filter-group filter-group-period">
+        <div class="filter-label">Period</div>
+        <div class="btn-group" id="periodTabs">
+          <button class="ftab active" data-range="this_month">This Month</button>
+          <button class="ftab" data-range="last_month">Last Month</button>
+          <button class="ftab" data-range="this_quarter">This Quarter</button>
+          <button class="ftab" data-range="last_quarter">Last Quarter</button>
+          <button class="ftab" data-range="custom">Custom</button>
+        </div>
+        <div class="custom-dates hidden" id="customDates">
+          <input type="date" class="date-input" id="customStart" />
+          <span class="date-sep">→</span>
+          <input type="date" class="date-input" id="customEnd" />
+        </div>
+      </div>
+
+      <!-- Country (populated dynamically) -->
+      <div class="filter-group" id="countryGroup" style="display:none">
+        <div class="filter-label">Country</div>
+        <div class="btn-group" id="countryBtns"></div>
+      </div>
+
+      <!-- Channel -->
+      <div class="filter-group">
+        <div class="filter-label">Channel</div>
+        <div class="btn-group" id="channelBtns">
+          <button class="ftab active" data-channel="all">All</button>
+          <button class="ftab" data-channel="google">Google</button>
+          <button class="ftab" data-channel="bing">Microsoft</button>
+        </div>
+      </div>
+
+      <!-- Campaign -->
+      <div class="filter-group">
+        <div class="filter-label">Campaign</div>
+        <select id="campaignSelect" class="filter-select">
+          <option value="all">All campaigns</option>
+        </select>
+      </div>
+
+      <!-- Compare toggle -->
+      <div class="filter-group filter-group-compare">
+        <div class="filter-label">Compare</div>
+        <label class="toggle-wrap" for="compareToggle">
+          <input type="checkbox" id="compareToggle" />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          <span class="toggle-text">vs prev. period</span>
+        </label>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Filter Pills ────────────────────────────────────────────────────── -->
+<div class="pills-bar hidden" id="pillsBar">
+  <div class="pills-inner" id="filterPills"></div>
+</div>
+
+<!-- ── Main ───────────────────────────────────────────────────────────── -->
+<main class="main">
+  <div id="errorBanner" class="error-banner hidden"></div>
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Pulling campaign data…</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <section class="kpi-grid">
+    <div class="kpi-card" id="kpi-spend">
+      <div class="kpi-label">Total Spend</div>
+      <div class="kpi-val" id="val-spend">—</div>
+      <div class="kpi-sub" id="sub-spend"></div>
+      <div class="kpi-compare hidden" id="cmp-spend"></div>
+    </div>
+    <div class="kpi-card" id="kpi-leads">
+      <div class="kpi-label">Total Leads</div>
+      <div class="kpi-val" id="val-leads">—</div>
+      <div class="kpi-sub">Quote form · Sales pipeline</div>
+      <div class="kpi-compare hidden" id="cmp-leads"></div>
+    </div>
+    <div class="kpi-card" id="kpi-cpl">
+      <div class="kpi-label">CPL</div>
+      <div class="kpi-val" id="val-cpl">—</div>
+      <div class="kpi-sub">Cost Per Lead</div>
+      <div class="kpi-compare hidden" id="cmp-cpl"></div>
+    </div>
+    <div class="kpi-card" id="kpi-cac">
+      <div class="kpi-label">CAC</div>
+      <div class="kpi-val" id="val-cac">—</div>
+      <div class="kpi-sub">Cost Per Close</div>
+      <div class="kpi-compare hidden" id="cmp-cac"></div>
+    </div>
+    <div class="kpi-card" id="kpi-pipeline">
+      <div class="kpi-label">Pipeline Value</div>
+      <div class="kpi-val" id="val-pipeline">—</div>
+      <div class="kpi-sub" id="sub-pipeline"></div>
+      <div class="kpi-compare hidden" id="cmp-pipeline"></div>
+    </div>
+    <div class="kpi-card" id="kpi-revenue">
+      <div class="kpi-label">Closed Revenue</div>
+      <div class="kpi-val" id="val-revenue">—</div>
+      <div class="kpi-sub" id="sub-revenue"></div>
+      <div class="kpi-compare hidden" id="cmp-revenue"></div>
+    </div>
+    <div class="kpi-card accent" id="kpi-roas">
+      <div class="kpi-label">ROAS</div>
+      <div class="kpi-val" id="val-roas">—</div>
+      <div class="kpi-sub">Revenue ÷ Spend</div>
+      <div class="kpi-compare hidden" id="cmp-roas"></div>
+    </div>
+    <div class="kpi-card accent" id="kpi-roi">
+      <div class="kpi-label">ROI</div>
+      <div class="kpi-val" id="val-roi">—</div>
+      <div class="kpi-sub">(Rev − Spend) ÷ Spend</div>
+      <div class="kpi-compare hidden" id="cmp-roi"></div>
+    </div>
+  </section>
+
+  <!-- Charts Row 1 -->
+  <section class="charts-row charts-row-2">
+    <div class="chart-card chart-wide">
+      <div class="chart-hdr">
+        <h3>Weekly Spend vs New Leads</h3>
+        <div class="chart-legend">
+          <span class="dot dot-google"></span>Google
+          <span class="dot dot-bing"></span>Microsoft
+          <span class="dot dot-leads"></span>Leads
+        </div>
+      </div>
+      <div class="chart-body"><canvas id="chartWeekly"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hdr"><h3>Daily Conversion Volume</h3></div>
+      <div class="chart-body"><canvas id="chartDaily"></canvas></div>
+    </div>
+  </section>
+
+  <!-- Charts Row 2 -->
+  <section class="charts-row charts-row-3">
+    <div class="chart-card">
+      <div class="chart-hdr"><h3>Cost Per Lead by Campaign</h3></div>
+      <div class="chart-body chart-body-sm"><canvas id="chartCPL"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hdr"><h3>Spend by Channel</h3></div>
+      <div class="chart-body chart-body-sm"><canvas id="chartSpendShare"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hdr"><h3>Spend vs Revenue</h3></div>
+      <div class="chart-body chart-body-sm"><canvas id="chartSpendRevenue"></canvas></div>
+    </div>
+  </section>
+
+  <!-- Campaign Table -->
+  <section class="table-section">
+    <div class="table-hdr">
+      <h3>Campaign Breakdown</h3>
+      <div class="table-controls">
+        <input id="tableSearch" class="search-input" type="text" placeholder="Filter campaigns…" />
+        <button class="btn-secondary" id="btnExport">Export CSV</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="campaignTable">
+        <thead>
+          <tr>
+            <th class="s" data-col="name">Campaign</th>
+            <th class="s" data-col="source">Source</th>
+            <th class="s n" data-col="spend">Spend</th>
+            <th class="s n" data-col="clicks">Clicks</th>
+            <th class="s n" data-col="impressions">Imp.</th>
+            <th class="s n" data-col="ctr">CTR</th>
+            <th class="s n" data-col="leads">Leads</th>
+            <th class="s n" data-col="closedWonDeals">Won</th>
+            <th class="s n" data-col="closeRate">Close %</th>
+            <th class="s n" data-col="cpl">CPL</th>
+            <th class="s n" data-col="cac">CAC</th>
+            <th class="s n" data-col="pipelineValue">Pipeline</th>
+            <th class="s n" data-col="closedRevenue">Revenue</th>
+            <th class="s n" data-col="roas">ROAS</th>
+            <th class="s n" data-col="roi">ROI</th>
+          </tr>
+        </thead>
+        <tbody id="tBody">
+          <tr><td colspan="15" class="empty">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer" id="tableFooter"></div>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
