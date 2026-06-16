@@ -25,7 +25,8 @@
       "Bash(python3 -c \"import json,sys; r=json.load\\(sys.stdin\\); print\\(r.get\\('html_url', r.get\\('message','?'\\)\\)\\)\")",
       "Bash(git init *)",
       "Bash(git branch *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git *)"
     ]
   }
 }
