@@ -1,4 +1,8 @@
+console.log('[startup] process.version:', process.version);
+console.log('[startup] NODE_ENV:', process.env.NODE_ENV);
+console.log('[startup] loading dotenv...');
 require('dotenv').config();
+console.log('[startup] dotenv loaded, PORT env:', process.env.PORT);
 
 const express = require('express');
 const helmet = require('helmet');
@@ -89,7 +93,9 @@ cron.schedule('*/30 * * * *', () => {
 });
 
 // ─── Start ────────────────────────────────────────────────────────────────────
+console.log('[startup] calling app.listen on PORT:', PORT);
 app.listen(PORT, () => {
+  console.log('[startup] listen callback fired — server is up on port', PORT);
   logger.info(`Duress Growth Command running at http://localhost:${PORT}`, {
     env: process.env.NODE_ENV,
     port: PORT,
