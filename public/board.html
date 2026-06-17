@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Duress — Board Meeting Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --font:       'Poppins', system-ui, sans-serif;
+      --g-color:    #1557b0;
+      --g-bg:       #e8f0fe;
+      --ms-color:   #005a9e;
+      --ms-bg:      #ddeeff;
+      --paid-color: #1e293b;
+      --paid-bg:    #e1e8f0;
+      --dir-color:  #047857;
+      --dir-bg:     #d1fae5;
+      --org-color:  #5b21b6;
+      --org-bg:     #ede9fe;
+      --tot-color:  #92400e;
+      --tot-bg:     #fef3c7;
+      --border:     #e2e8f0;
+      --text:       #1e293b;
+      --muted:      #64748b;
+    }
+
+    html, body {
+      font-family: var(--font);
+      background: #fff;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    /* ── Header ──────────────────────────────────────────── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-info h1 { font-size: 16px; font-weight: 700; }
+    .header-info .sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    .btn {
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-primary { background: var(--text); color: #fff; }
+    .btn-primary:hover { background: #334155; }
+    .btn-outline { background: #fff; color: var(--text); border: 1px solid var(--border); }
+    .btn-outline:hover { background: #f8fafc; }
+
+    /* ── Layout ──────────────────────────────────────────── */
+    .page-body {
+      display: flex;
+      height: calc(100vh - 57px);
+      overflow: hidden;
+    }
+    .table-area {
+      flex: 1;
+      overflow: auto;
+      padding: 16px 20px 24px;
+    }
+    .kpi-sidebar {
+      width: 196px;
+      min-width: 196px;
+      border-left: 1px solid var(--border);
+      padding: 16px 14px;
+      overflow-y: auto;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ── KPI Cards ───────────────────────────────────────── */
+    .kpi-heading {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .kpi-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-top-width: 3px;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .kpi-card .label {
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .kpi-card .value {
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--text);
+    }
+    .kpi-card .sub { font-size: 9px; color: var(--muted); margin-top: 3px; }
+    .kpi-spend   { border-top-color: var(--g-color); }
+    .kpi-leads   { border-top-color: var(--dir-color); }
+    .kpi-cpl     { border-top-color: var(--tot-color); }
+    .kpi-channel { border-top-color: var(--org-color); }
+
+    /* ── Table ───────────────────────────────────────────── */
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    thead th {
+      background: var(--text);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding: 7px 8px;
+      text-align: right;
+      white-space: nowrap;
+      border-bottom: 2px solid #0f172a;
+      border-right: 1px solid #334155;
+    }
+    thead th.col-section {
+      text-align: center;
+      position: sticky; left: 0; z-index: 12;
+      min-width: 34px; width: 34px;
+      background: var(--text);
+    }
+    thead th.col-metric {
+      text-align: left;
+      position: sticky; left: 34px; z-index: 12;
+      min-width: 130px; width: 130px;
+      background: var(--text);
+      border-right: 2px solid #0f172a;
+    }
+    thead th.col-month { min-width: 66px; }
+    thead th.col-current { background: #0f172a; color: #cbd5e1; }
+
+    tbody td {
+      padding: 5px 8px;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+      background: #fff;
+      font-size: 11px;
+    }
+    tbody tr:hover td:not(.section-cell) { background: #f1f5f9 !important; }
+
+    td.section-cell {
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      text-align: center;
+      vertical-align: middle;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      padding: 8px 4px;
+      position: sticky; left: 0; z-index: 5;
+      border-right: 2px solid;
+    }
+    td.metric-cell {
+      text-align: left;
+      font-size: 11px;
+      padding-left: 10px;
+      position: sticky; left: 34px; z-index: 5;
+      border-right: 2px solid var(--border);
+      background: #fff;
+    }
+
+    /* Section colours */
+    .s-google    td.section-cell { background: var(--g-bg);    color: var(--g-color);    border-color: var(--g-color);    }
+    .s-google    td.metric-cell  { background: #fafcff; }
+    .s-google.stripe td:not(.section-cell):not(.metric-cell) { background: var(--g-bg); }
+
+    .s-microsoft td.section-cell { background: var(--ms-bg);   color: var(--ms-color);   border-color: var(--ms-color);   }
+    .s-microsoft td.metric-cell  { background: #fafeff; }
+    .s-microsoft.stripe td:not(.section-cell):not(.metric-cell) { background: var(--ms-bg); }
+
+    .s-paid      td.section-cell { background: var(--paid-bg); color: var(--paid-color); border-color: var(--paid-color); }
+    .s-paid      td.metric-cell  { background: #f8fafc; font-weight: 500; }
+    .s-paid      td { font-weight: 500; }
+    .s-paid.stripe td:not(.section-cell):not(.metric-cell) { background: var(--paid-bg); }
+
+    .s-direct    td.section-cell { background: var(--dir-bg);  color: var(--dir-color);  border-color: var(--dir-color);  }
+    .s-direct    td.metric-cell  { background: #f0fdf8; }
+    .s-direct.stripe td:not(.section-cell):not(.metric-cell) { background: var(--dir-bg); }
+
+    .s-organic   td.section-cell { background: var(--org-bg);  color: var(--org-color);  border-color: var(--org-color);  }
+    .s-organic   td.metric-cell  { background: #faf5ff; }
+    .s-organic.stripe td:not(.section-cell):not(.metric-cell) { background: var(--org-bg); }
+
+    .s-total     td.section-cell { background: var(--tot-bg);  color: var(--tot-color);  border-color: var(--tot-color);  }
+    .s-total     td.metric-cell  { background: #fffbeb; font-weight: 600; }
+    .s-total     td { font-weight: 600; }
+    .s-total.stripe td:not(.section-cell):not(.metric-cell) { background: var(--tot-bg); }
+
+    /* Loading / error */
+    .state-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 20px;
+      color: var(--muted);
+      gap: 12px;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--g-color);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footnote {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      line-height: 1.6;
+    }
+
+    /* ── Print ────────────────────────────────────────────── */
+    @media print {
+      @page { size: A3 landscape; margin: 8mm; }
+
+      html, body { font-size: 8px; }
+
+      .page-header { position: static; padding: 6px 0; border-bottom: 1pt solid #ccc; }
+      .btn { display: none !important; }
+
+      .page-body { height: auto; overflow: visible; flex-direction: column-reverse; }
+
+      .kpi-sidebar {
+        width: 100%; min-width: unset;
+        border-left: none; border-bottom: 1pt solid #ccc;
+        flex-direction: row; flex-wrap: wrap;
+        padding: 8px 0; gap: 8px;
+        background: #fff;
+        overflow: visible;
+      }
+      .kpi-heading { width: 100%; }
+      .kpi-card { flex: 1; min-width: 110px; border-radius: 4px; padding: 8px; }
+      .kpi-card .value { font-size: 13px; }
+
+      .table-area { padding: 8px 0; overflow: visible; }
+
+      table { width: 100%; }
+      thead th, tbody td { font-size: 6.5px; padding: 3px 4px; }
+
+      td.section-cell {
+        position: static;
+        writing-mode: horizontal-tb;
+        transform: none;
+        font-size: 6px;
+        width: auto;
+      }
+      td.metric-cell { position: static; font-size: 7px; }
+      thead th.col-section, thead th.col-metric { position: static; }
+
+      .footnote { font-size: 7px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="header-info">
+    <h1>Duress — Board Meeting Dashboard</h1>
+    <div class="sub" id="generatedAt">Loading…</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-outline" onclick="location.reload()">↺ Refresh</button>
+    <button class="btn btn-primary" onclick="window.print()">⎙ Print</button>
+  </div>
+</header>
+
+<div class="page-body">
+  <div class="table-area">
+    <div class="state-box" id="loadingBox">
+      <div class="spinner"></div>
+      <span>Loading 13 months of data…</span>
+    </div>
+    <div class="state-box" id="errorBox" style="display:none">
+      <span id="errorMsg" style="color:#ef4444"></span>
+    </div>
+    <div id="tableWrap" style="display:none">
+      <table id="boardTable"></table>
+      <p class="footnote">
+        * Current month is partial (through today).
+        &nbsp;Direct = all HubSpot contacts not attributed to a paid channel.
+        &nbsp;Organic breakdown requires additional UTM attribution data.
+      </p>
+    </div>
+  </div>
+
+  <aside class="kpi-sidebar">
+    <div class="kpi-heading">13-Month Summary</div>
+    <div class="kpi-card kpi-spend">
+      <div class="label">Total Ad Spend</div>
+      <div class="value" id="kpiSpend">—</div>
+      <div class="sub">Paid channels combined</div>
+    </div>
+    <div class="kpi-card kpi-leads">
+      <div class="label">Total Leads</div>
+      <div class="value" id="kpiLeads">—</div>
+      <div class="sub">All channels</div>
+    </div>
+    <div class="kpi-card kpi-cpl">
+      <div class="label">Avg. Paid CPL</div>
+      <div class="value" id="kpiCPL">—</div>
+      <div class="sub">Paid leads only</div>
+    </div>
+    <div class="kpi-card kpi-channel">
+      <div class="label">Top Channel</div>
+      <div class="value" id="kpiChannel">—</div>
+      <div class="sub">By lead volume</div>
+    </div>
+  </aside>
+</div>
+
+<script>
+// ── Date helpers ─────────────────────────────────────────────────────────────
+function getLast13Months() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const months = [];
+  for (let i = 12; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const y = d.getFullYear(), m = d.getMonth();
+    const startDate = `${y}-${pad(m + 1)}-01`;
+    const isCurrent = i === 0;
+    const endDate = isCurrent
+      ? `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+      : `${y}-${pad(m + 1)}-${pad(new Date(y, m + 1, 0).getDate())}`;
+    months.push({
+      label: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+      startDate,
+      endDate,
+      isCurrent,
+    });
+  }
+  return months;
+}
+
+// ── API ──────────────────────────────────────────────────────────────────────
+async function fetchMonth({ startDate, endDate }) {
+  const r = await fetch(`/api/analytics?startDate=${startDate}&endDate=${endDate}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+// ── Data processing ──────────────────────────────────────────────────────────
+function processMonthData(d) {
+  if (!d) return null;
+  const camps = d.campaigns || [];
+  const tot   = d.totals || {};
+  const dr    = d.dealRevenue || {};
+  const total = tot.leads || 0;
+
+  function agg(src) {
+    const cc     = camps.filter(c => c.source === src);
+    const spend  = cc.reduce((s, c) => s + (c.spend  || 0), 0);
+    const clicks = cc.reduce((s, c) => s + (c.clicks || 0), 0);
+    const conv   = cc.reduce((s, c) => s + (c.conversions || 0), 0);
+    const leads  = cc.reduce((s, c) => s + (c.leads  || 0), 0);
+    return {
+      spend, clicks, leads,
+      cpc:  clicks > 0 ? spend / clicks            : null,
+      cvr:  clicks > 0 ? (conv / clicks) * 100     : null,
+      pct:  total  > 0 ? (leads / total) * 100     : null,
+      cpl:  leads  > 0 ? spend / leads             : null,
+    };
+  }
+
+  const g   = agg('google');
+  const ms  = agg('bing');
+  const paidSpend = g.spend + ms.spend;
+  const paidLeads = g.leads + ms.leads;
+  const closedRev = tot.closedRevenue || 0;
+  const nonPaid   = Math.max(0, total - paidLeads);
+
+  return {
+    g,
+    ms,
+    paid: {
+      spend:   paidSpend,
+      clicks:  g.clicks + ms.clicks,
+      leads:   paidLeads,
+      pct:     total > 0 ? (paidLeads / total) * 100 : null,
+      cpl:     paidLeads > 0 ? paidSpend / paidLeads  : null,
+      projRev: dr.pipelineValue || 0,
+      roas:    paidSpend > 0 && closedRev > 0 ? closedRev / paidSpend : null,
+    },
+    direct: {
+      leads: nonPaid,
+      pct:   total > 0 ? (nonPaid / total) * 100 : null,
+    },
+    organic: {
+      leads: null,
+      pct:   null,
+    },
+    perf: {
+      leads:    total,
+      spend:    paidSpend,
+      cpl:      paidLeads > 0 ? paidSpend / paidLeads  : null,
+      roas:     paidSpend > 0 && closedRev > 0 ? closedRev / paidSpend : null,
+      pipeline: dr.pipelineValue || 0,
+    },
+  };
+}
+
+// ── Formatters ───────────────────────────────────────────────────────────────
+const fCur  = v => v == null ? '—' : '$' + Math.round(v).toLocaleString('en-US');
+const fNum  = v => v == null ? '—' : Math.round(v).toLocaleString('en-US');
+const fPct  = v => v == null ? '—' : v.toFixed(1) + '%';
+const fMon  = v => v == null ? '—' : '$' + v.toFixed(2);
+const fROAS = v => v == null ? '—' : v.toFixed(2) + 'x';
+
+// ── Section / row definitions ────────────────────────────────────────────────
+const SECTIONS = [
+  {
+    id: 'google', label: 'Google', cls: 's-google',
+    rows: [
+      { label: 'Ad Spend',        f: d => fCur(d.g.spend)  },
+      { label: 'Clicks',          f: d => fNum(d.g.clicks) },
+      { label: 'CPC',             f: d => fMon(d.g.cpc)    },
+      { label: 'Conversion Rate', f: d => fPct(d.g.cvr)    },
+      { label: 'Leads',           f: d => fNum(d.g.leads)  },
+      { label: '% Google',        f: d => fPct(d.g.pct)    },
+      { label: 'CPL',             f: d => fMon(d.g.cpl)    },
+    ],
+  },
+  {
+    id: 'microsoft', label: 'Microsoft', cls: 's-microsoft',
+    rows: [
+      { label: 'Ad Spend',        f: d => fCur(d.ms.spend)  },
+      { label: 'Clicks',          f: d => fNum(d.ms.clicks) },
+      { label: 'CPC',             f: d => fMon(d.ms.cpc)    },
+      { label: 'Conversion Rate', f: d => fPct(d.ms.cvr)    },
+      { label: 'Leads',           f: d => fNum(d.ms.leads)  },
+      { label: '% Microsoft',     f: d => fPct(d.ms.pct)    },
+      { label: 'CPL',             f: d => fMon(d.ms.cpl)    },
+    ],
+  },
+  {
+    id: 'paid', label: 'Paid Totals', cls: 's-paid',
+    rows: [
+      { label: 'Total Ad Spend',  f: d => fCur(d.paid.spend)    },
+      { label: 'Total Clicks',    f: d => fNum(d.paid.clicks)   },
+      { label: 'Total Leads',     f: d => fNum(d.paid.leads)    },
+      { label: '% Paid',          f: d => fPct(d.paid.pct)      },
+      { label: 'Avg CPL',         f: d => fMon(d.paid.cpl)      },
+      { label: 'Proj. Revenue',   f: d => fCur(d.paid.projRev)  },
+      { label: 'ROAS',            f: d => fROAS(d.paid.roas)    },
+    ],
+  },
+  {
+    id: 'direct', label: 'Direct', cls: 's-direct',
+    rows: [
+      { label: 'Leads',    f: d => fNum(d.direct.leads) },
+      { label: '% Direct', f: d => fPct(d.direct.pct)  },
+    ],
+  },
+  {
+    id: 'organic', label: 'Organic', cls: 's-organic',
+    rows: [
+      { label: 'Leads',     f: () => '—' },
+      { label: '% Organic', f: () => '—' },
+    ],
+  },
+  {
+    id: 'total', label: 'Total Perf.', cls: 's-total',
+    rows: [
+      { label: 'Total Leads',    f: d => fNum(d.perf.leads)    },
+      { label: 'Total Ad Spend', f: d => fCur(d.perf.spend)    },
+      { label: 'Avg CPL',        f: d => fMon(d.perf.cpl)      },
+      { label: 'ROAS',           f: d => fROAS(d.perf.roas)    },
+      { label: 'Pipeline Value', f: d => fCur(d.perf.pipeline) },
+    ],
+  },
+];
+
+// ── Build table ──────────────────────────────────────────────────────────────
+function buildTable(months, data) {
+  let html = '<thead><tr>';
+  html += '<th class="col-section">—</th>';
+  html += '<th class="col-metric">Metric</th>';
+  months.forEach(m => {
+    const cur = m.isCurrent ? ' col-current' : '';
+    html += `<th class="col-month${cur}">${m.label}${m.isCurrent ? ' *' : ''}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  for (const sec of SECTIONS) {
+    sec.rows.forEach((row, i) => {
+      const stripe = (i % 2 !== 0) ? ' stripe' : '';
+      html += `<tr class="${sec.cls}${stripe}">`;
+      if (i === 0) {
+        html += `<td class="section-cell" rowspan="${sec.rows.length}">${sec.label}</td>`;
+      }
+      html += `<td class="metric-cell">${row.label}</td>`;
+      data.forEach(d => {
+        html += `<td>${d ? row.f(d) : '—'}</td>`;
+      });
+      html += '</tr>';
+    });
+  }
+
+  html += '</tbody>';
+  document.getElementById('boardTable').innerHTML = html;
+}
+
+// ── Update KPI cards ─────────────────────────────────────────────────────────
+function updateKPIs(data) {
+  const v      = data.filter(Boolean);
+  const spend  = v.reduce((s, d) => s + d.paid.spend,  0);
+  const leads  = v.reduce((s, d) => s + d.perf.leads,  0);
+  const pLeads = v.reduce((s, d) => s + d.paid.leads,  0);
+  const gLeads = v.reduce((s, d) => s + d.g.leads,     0);
+  const mLeads = v.reduce((s, d) => s + d.ms.leads,    0);
+
+  document.getElementById('kpiSpend').textContent   = fCur(spend);
+  document.getElementById('kpiLeads').textContent   = fNum(leads);
+  document.getElementById('kpiCPL').textContent     = pLeads > 0 ? fMon(spend / pLeads) : '—';
+  document.getElementById('kpiChannel').textContent = gLeads >= mLeads ? 'Google' : 'Microsoft';
+}
+
+// ── Main ─────────────────────────────────────────────────────────────────────
+async function main() {
+  const months = getLast13Months();
+  const now = new Date();
+  document.getElementById('generatedAt').textContent =
+    'Generated ' + now.toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    });
+
+  const results = await Promise.allSettled(months.map(m => fetchMonth(m)));
+  const data = results.map((r, i) => {
+    if (r.status === 'fulfilled') return processMonthData(r.value);
+    console.warn('[board] failed to load', months[i].label, r.reason?.message);
+    return null;
+  });
+
+  document.getElementById('loadingBox').style.display = 'none';
+  buildTable(months, data);
+  updateKPIs(data);
+  document.getElementById('tableWrap').style.display = '';
+}
+
+main().catch(err => {
+  document.getElementById('loadingBox').style.display = 'none';
+  document.getElementById('errorMsg').textContent = 'Failed to load dashboard: ' + err.message;
+  document.getElementById('errorBox').style.display = '';
+});
+</script>
+
+</body>
+</html>
