@@ -218,4 +218,4 @@ function buildTotals(rows, totalLeads, dealRevenue) {
   );
 }
 
-module.exports = { mergeCampaigns, groupLeads, buildTimeSeries, normaliseSource };
+module.exports = { mergeCampaigns, groupLeads, buildTimeSeries, classifySource };
