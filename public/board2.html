@@ -374,10 +374,6 @@
         <div class="kpi-val" id="kpi-cpl">—</div>
         <div class="kpi-sub">paid leads, all months</div>
       </div>
-      <div class="kpi" style="--kc:#10b981">
-        <div class="kpi-lbl">Closed Revenue</div>
-        <div class="kpi-val" id="kpi-closed">—</div>
-      </div>
       <div class="kpi" style="--kc:#6366f1">
         <div class="kpi-lbl">Paid Pipeline</div>
         <div class="kpi-val" id="kpi-pipeline">—</div>
@@ -465,7 +461,6 @@ const SECTIONS = [
       { lbl: 'Total Leads',     key: 'paidLeads', edit: false },
       { lbl: 'Avg CPL',         key: 'paidCpl',   edit: false },
       { lbl: 'Paid Pipeline',   key: 'pipeline',  edit: true  },
-      { lbl: 'Closed Revenue',  key: 'closed',    edit: true  },
       { lbl: 'ROAS',            key: 'roas',      edit: false },
       { lbl: 'ROI',             key: 'roi',       edit: false },
     ],
@@ -492,7 +487,6 @@ const SECTIONS = [
       { lbl: '% Direct',       key: 'pctDirect',    edit: false },
       { lbl: '% Organic',      key: 'pctOrganic',   edit: false },
       { lbl: 'Paid Pipeline',  key: 'totalPipeline',edit: false },
-      { lbl: 'Closed Revenue', key: 'totalClosed',  edit: false },
       { lbl: 'ROAS',           key: 'totalRoas',    edit: false },
       { lbl: 'ROI',            key: 'totalRoi',     edit: false },
     ],
@@ -660,7 +654,7 @@ function clearAll() {
   });
   document.querySelectorAll('.ec').forEach(el => { el.textContent = ''; });
   document.querySelectorAll('.ac').forEach(el => { el.textContent = '—'; });
-  ['kpi-spend','kpi-leads','kpi-cpl','kpi-closed','kpi-pipeline'].forEach(id => {
+  ['kpi-spend','kpi-leads','kpi-cpl','kpi-pipeline'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = '—';
   });
   const ch = document.getElementById('kpi-channel');
