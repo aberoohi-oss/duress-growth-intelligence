@@ -58,6 +58,10 @@ const apiLimiter = rateLimit({
 });
 app.use('/api', apiLimiter);
 
+// ─── Named page routes (before static so they always win) ────────────────────
+app.get('/board',  (req, res) => res.sendFile(path.join(__dirname, 'public/board.html')));
+app.get('/board2', (req, res) => res.sendFile(path.join(__dirname, 'public/board2.html')));
+
 // ─── Static files ─────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -74,10 +78,6 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-
-// Board meeting dashboards
-app.get('/board',  (req, res) => res.sendFile(path.join(__dirname, 'public/board.html')));
-app.get('/board2', (req, res) => res.sendFile(path.join(__dirname, 'public/board2.html')));
 
 // Catch-all: serve the SPA for any non-API, non-asset route
 app.get('*', (req, res) => {
