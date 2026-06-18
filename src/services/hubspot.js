@@ -55,7 +55,7 @@ async function getLeads(startDate, endDate) {
       (opts) => client.crm.contacts.searchApi.doSearch(opts),
       [{
         filters: [
-          { propertyName: 'recent_conversion_event_name', operator: 'CONTAINS_TOKEN', value: QUOTE_FORM_TOKEN },
+          { propertyName: 'first_conversion_event_name', operator: 'CONTAINS_TOKEN', value: QUOTE_FORM_TOKEN },
           { propertyName: 'createdate', operator: 'GTE', value: String(startTs) },
           { propertyName: 'createdate', operator: 'LTE', value: String(endTs) },
         ],
