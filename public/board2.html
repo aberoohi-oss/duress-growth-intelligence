@@ -60,9 +60,11 @@
       transition: background 0.15s;
       line-height: 1;
     }
-    .btn:hover   { background: rgba(255,255,255,0.16); }
-    .btn-blue    { background: var(--paid); border-color: #2563eb; }
+    .btn:hover      { background: rgba(255,255,255,0.16); }
+    .btn-blue       { background: var(--paid); border-color: #2563eb; }
     .btn-blue:hover { background: #2563eb; }
+    .btn-green       { background: #059669; border-color: #047857; }
+    .btn-green:hover { background: #047857; }
 
     /* ── Layout ──────────────────────────────────────────────────────────────── */
     .layout { display: flex; flex: 1; overflow: hidden; }
@@ -101,11 +103,7 @@
       color: var(--dim);
       margin-bottom: 12px;
     }
-    .leg {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
+    .leg { display: flex; align-items: center; gap: 5px; }
     .leg-dot {
       width: 14px;
       height: 14px;
@@ -125,7 +123,6 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px var(--border);
     }
 
-    /* Header */
     thead th {
       background: var(--navy);
       color: rgba(255,255,255,0.9);
@@ -153,7 +150,6 @@
     th.h-mon { min-width: 112px; }
     th.h-yr  { border-left: 2px solid rgba(255,255,255,0.25); }
 
-    /* Body cells */
     tbody td {
       padding: 10px 14px;
       border-bottom: 1px solid var(--border);
@@ -161,7 +157,6 @@
       font-size: 14px;
     }
 
-    /* Metric label column — sticky */
     .lc {
       width: 190px;
       min-width: 190px;
@@ -192,11 +187,7 @@
 
     tr.sec-banner.first td { border-top: none; }
 
-    tr.sec-banner td.lc {
-      z-index: 2;
-      background: #f8fafc;
-    }
-
+    tr.sec-banner td.lc { z-index: 2; background: #f8fafc; }
     tr.sec-banner td.fill { background: #f8fafc; }
 
     tr.sec-banner.paid    td.lc { border-left: 4px solid var(--paid);    color: var(--paid); }
@@ -204,13 +195,11 @@
     tr.sec-banner.organic td.lc { border-left: 4px solid var(--organic); color: var(--organic); }
     tr.sec-banner.total   td.lc { border-left: 4px solid var(--total);   color: var(--total); }
 
-    /* Subtle left accent on data rows within each section */
     tr.sec-paid    .lc { border-left: 3px solid rgba(59, 130, 246, 0.2); }
     tr.sec-direct  .lc { border-left: 3px solid rgba(245,158,11,  0.2); }
     tr.sec-organic .lc { border-left: 3px solid rgba(16, 185,129, 0.2); }
     tr.sec-total   .lc { border-left: 3px solid rgba(51, 65,  85,  0.15); }
 
-    /* Editable cells — yellow, dashed border */
     .ec {
       text-align: right;
       font-variant-numeric: tabular-nums;
@@ -229,7 +218,6 @@
       box-shadow: inset 0 0 0 1px rgba(217,119,6,0.25);
     }
 
-    /* Auto-calc cells — light blue */
     .ac {
       text-align: right;
       font-variant-numeric: tabular-nums;
@@ -240,16 +228,15 @@
       min-width: 112px;
     }
 
-    /* TOTAL section label weight */
     tr.stotal .lc { font-weight: 600; }
 
-    /* ── Print ───────────────────────────────────────────────────────────────── */
+    /* ── Print (regular) ─────────────────────────────────────────────────────── */
     @media print {
       @page { size: A3 landscape; margin: 12mm; }
 
       .page    { height: auto; overflow: visible; }
       header   { background: #fff !important; border-bottom: 1px solid #000; padding: 8px 0; }
-      .btn     { display: none; }
+      .btn     { display: none !important; }
       .hd-title h1 { color: #000; font-size: 14px; }
       .hd-title p  { color: #555; }
       .layout  { display: block; overflow: visible; }
@@ -276,6 +263,7 @@
     </div>
     <div class="hd-actions">
       <button class="btn" id="btnClear">Clear All</button>
+      <button class="btn btn-green" id="btnPDF">&#8659;&ensp;Export PDF</button>
       <button class="btn btn-blue" id="btnPrint">&#9113;&ensp;Print</button>
     </div>
   </header>
@@ -318,28 +306,28 @@ const YR_BREAK = 11;     // JAN 2026 index — adds a header divider
 
 // ── Data store ────────────────────────────────────────────────────────────────
 const DATA = Array.from({ length: N }, () => ({
-  adSpend: 0, paidLeads: 0, directLeads: 0, organicLeads: 0,
+  gSpend: 0, gLeads: 0, msSpend: 0, msLeads: 0, directLeads: 0, organicLeads: 0,
 }));
 
 // ── Seed data (fetched 2026-06-18) ────────────────────────────────────────────
 const SEED = [
-  { adSpend: 18132, paidLeads: 39,  directLeads: 20,  organicLeads: 11 }, // FEB 2025
-  { adSpend: 18093, paidLeads: 40,  directLeads: 19,  organicLeads:  8 }, // MAR 2025
-  { adSpend: 16712, paidLeads: 66,  directLeads: 21,  organicLeads: 14 }, // APR 2025
-  { adSpend: 25333, paidLeads: 79,  directLeads: 47,  organicLeads: 18 }, // MAY 2025
-  { adSpend: 19581, paidLeads: 56,  directLeads: 28,  organicLeads: 19 }, // JUN 2025
-  { adSpend: 25631, paidLeads: 87,  directLeads: 70,  organicLeads: 18 }, // JUL 2025
-  { adSpend: 23604, paidLeads: 64,  directLeads: 63,  organicLeads: 16 }, // AUG 2025
-  { adSpend: 38648, paidLeads: 83,  directLeads: 52,  organicLeads: 19 }, // SEP 2025
-  { adSpend: 39732, paidLeads: 96,  directLeads: 76,  organicLeads: 33 }, // OCT 2025
-  { adSpend: 36892, paidLeads: 97,  directLeads: 64,  organicLeads: 17 }, // NOV 2025
-  { adSpend: 40872, paidLeads: 89,  directLeads: 47,  organicLeads: 17 }, // DEC 2025
-  { adSpend: 42400, paidLeads: 114, directLeads: 62,  organicLeads: 18 }, // JAN 2026
-  { adSpend: 44356, paidLeads: 141, directLeads: 57,  organicLeads: 18 }, // FEB 2026
-  { adSpend: 45444, paidLeads: 109, directLeads: 51,  organicLeads: 13 }, // MAR 2026
-  { adSpend: 45565, paidLeads: 105, directLeads: 83,  organicLeads: 11 }, // APR 2026
-  { adSpend: 45015, paidLeads: 115, directLeads: 113, organicLeads: 12 }, // MAY 2026
-  { adSpend: 26630, paidLeads: 72,  directLeads: 48,  organicLeads:  9 }, // JUN 2026
+  { gSpend: 15079, gLeads: 33, msSpend: 3053, msLeads:  6, directLeads:  20, organicLeads: 11 }, // FEB 2025
+  { gSpend: 16623, gLeads: 36, msSpend: 1470, msLeads:  6, directLeads:  19, organicLeads:  8 }, // MAR 2025
+  { gSpend: 15200, gLeads: 57, msSpend: 1513, msLeads:  9, directLeads:  21, organicLeads: 14 }, // APR 2025
+  { gSpend: 21266, gLeads: 53, msSpend: 4067, msLeads: 15, directLeads:  47, organicLeads: 18 }, // MAY 2025
+  { gSpend: 16949, gLeads: 20, msSpend: 2632, msLeads:  2, directLeads:  28, organicLeads: 19 }, // JUN 2025
+  { gSpend: 17972, gLeads: 55, msSpend: 7660, msLeads: 25, directLeads:  70, organicLeads: 18 }, // JUL 2025
+  { gSpend: 14837, gLeads: 47, msSpend: 8767, msLeads:  9, directLeads:  63, organicLeads: 16 }, // AUG 2025
+  { gSpend: 29516, gLeads: 56, msSpend: 9132, msLeads:  9, directLeads:  52, organicLeads: 19 }, // SEP 2025
+  { gSpend: 30381, gLeads: 68, msSpend: 9351, msLeads: 11, directLeads:  76, organicLeads: 33 }, // OCT 2025
+  { gSpend: 29760, gLeads: 77, msSpend: 7132, msLeads: 21, directLeads:  64, organicLeads: 17 }, // NOV 2025
+  { gSpend: 36308, gLeads: 64, msSpend: 4564, msLeads: 12, directLeads:  47, organicLeads: 17 }, // DEC 2025
+  { gSpend: 37851, gLeads: 90, msSpend: 4550, msLeads:  9, directLeads:  62, organicLeads: 18 }, // JAN 2026
+  { gSpend: 39894, gLeads: 96, msSpend: 4461, msLeads: 18, directLeads:  57, organicLeads: 18 }, // FEB 2026
+  { gSpend: 41040, gLeads: 67, msSpend: 4404, msLeads: 14, directLeads:  51, organicLeads: 13 }, // MAR 2026
+  { gSpend: 41034, gLeads: 96, msSpend: 4532, msLeads: 18, directLeads:  83, organicLeads: 11 }, // APR 2026
+  { gSpend: 40449, gLeads: 96, msSpend: 4565, msLeads: 18, directLeads: 113, organicLeads: 12 }, // MAY 2026
+  { gSpend: 24286, gLeads: 45, msSpend: 2344, msLeads: 14, directLeads:  48, organicLeads:  9 }, // JUN 2026
 ];
 
 // ── Formatters ────────────────────────────────────────────────────────────────
@@ -355,11 +343,27 @@ const fmtPct = v => (v == null || isNaN(v)) ? '—' : Math.round(v * 100) + '%';
 // ── Section / row schema ──────────────────────────────────────────────────────
 const SECTIONS = [
   {
-    key: 'paid', label: 'PAID', css: 'paid',
+    key: 'google', label: 'PAID — GOOGLE', css: 'paid',
     rows: [
-      { lbl: 'Ad Spend',      key: 'adSpend',    edit: true  },
-      { lbl: 'Leads',         key: 'paidLeads',  edit: true  },
-      { lbl: 'Cost Per Lead', key: 'cpl',        edit: false },
+      { lbl: 'Ad Spend',      key: 'gSpend', edit: true  },
+      { lbl: 'Leads',         key: 'gLeads', edit: true  },
+      { lbl: 'Cost Per Lead', key: 'gCpl',   edit: false },
+    ],
+  },
+  {
+    key: 'microsoft', label: 'PAID — MICROSOFT', css: 'paid',
+    rows: [
+      { lbl: 'Ad Spend',      key: 'msSpend', edit: true  },
+      { lbl: 'Leads',         key: 'msLeads', edit: true  },
+      { lbl: 'Cost Per Lead', key: 'msCpl',   edit: false },
+    ],
+  },
+  {
+    key: 'paidtotals', label: 'PAID TOTALS', css: 'paid',
+    rows: [
+      { lbl: 'Total Ad Spend', key: 'paidSpend', edit: false },
+      { lbl: 'Total Leads',    key: 'paidLeads', edit: false },
+      { lbl: 'Avg CPL',        key: 'paidCpl',   edit: false },
     ],
   },
   {
@@ -389,43 +393,52 @@ const SECTIONS = [
 
 // ── Recalculate a single column's derived cells ───────────────────────────────
 function recalcCol(ci) {
-  const d   = DATA[ci];
-  const tot = d.paidLeads + d.directLeads + d.organicLeads;
-  const cpl = d.paidLeads > 0 ? d.adSpend / d.paidLeads : null;
-  const avg = tot > 0         ? d.adSpend / tot          : null;
-  const pPd = tot > 0         ? d.paidLeads    / tot     : null;
-  const pDr = tot > 0         ? d.directLeads  / tot     : null;
-  const pOr = tot > 0         ? d.organicLeads / tot     : null;
+  const d         = DATA[ci];
+  const paidSpend = d.gSpend  + d.msSpend;
+  const paidLeads = d.gLeads  + d.msLeads;
+  const tot       = paidLeads + d.directLeads + d.organicLeads;
+
+  const gCpl    = d.gLeads  > 0 ? d.gSpend  / d.gLeads  : null;
+  const msCpl   = d.msLeads > 0 ? d.msSpend / d.msLeads : null;
+  const paidCpl = paidLeads > 0 ? paidSpend / paidLeads : null;
+  const avgCpl  = tot       > 0 ? paidSpend / tot       : null;
+  const pPd = tot > 0 ? paidLeads      / tot : null;
+  const pDr = tot > 0 ? d.directLeads  / tot : null;
+  const pOr = tot > 0 ? d.organicLeads / tot : null;
 
   const set = (key, val) => {
     const el = document.querySelector(`.ac[data-key="${key}"][data-col="${ci}"]`);
     if (el) el.textContent = val;
   };
 
-  set('cpl',        cpl != null ? fmtM(cpl) : '—');
-  set('totalLeads', tot > 0     ? fmtN(tot) : '—');
-  set('totalSpend', d.adSpend > 0 ? fmtM(d.adSpend) : '—');
-  set('avgCpl',     avg != null ? fmtM(avg) : '—');
-  set('pctPaid',    pPd != null ? fmtPct(pPd) : '—');
-  set('pctDirect',  pDr != null ? fmtPct(pDr) : '—');
-  set('pctOrganic', pOr != null ? fmtPct(pOr) : '—');
+  set('gCpl',       gCpl      != null ? fmtM(gCpl)      : '—');
+  set('msCpl',      msCpl     != null ? fmtM(msCpl)     : '—');
+  set('paidSpend',  paidSpend  > 0    ? fmtM(paidSpend) : '—');
+  set('paidLeads',  paidLeads  > 0    ? fmtN(paidLeads) : '—');
+  set('paidCpl',    paidCpl   != null ? fmtM(paidCpl)   : '—');
+  set('totalLeads', tot        > 0    ? fmtN(tot)        : '—');
+  set('totalSpend', paidSpend  > 0    ? fmtM(paidSpend) : '—');
+  set('avgCpl',     avgCpl    != null ? fmtM(avgCpl)    : '—');
+  set('pctPaid',    pPd       != null ? fmtPct(pPd)     : '—');
+  set('pctDirect',  pDr       != null ? fmtPct(pDr)     : '—');
+  set('pctOrganic', pOr       != null ? fmtPct(pOr)     : '—');
 
   recalcKPIs();
 }
 
 // ── Recalculate KPI sidebar ───────────────────────────────────────────────────
 function recalcKPIs() {
-  const totSpend = DATA.reduce((s, d) => s + d.adSpend,      0);
-  const totPaid  = DATA.reduce((s, d) => s + d.paidLeads,    0);
-  const totDir   = DATA.reduce((s, d) => s + d.directLeads,  0);
-  const totOrg   = DATA.reduce((s, d) => s + d.organicLeads, 0);
+  const totSpend = DATA.reduce((s, d) => s + d.gSpend + d.msSpend,  0);
+  const totPaid  = DATA.reduce((s, d) => s + d.gLeads + d.msLeads,  0);
+  const totDir   = DATA.reduce((s, d) => s + d.directLeads,         0);
+  const totOrg   = DATA.reduce((s, d) => s + d.organicLeads,        0);
   const totLeads = totPaid + totDir + totOrg;
   const avgCpl   = totPaid > 0 ? totSpend / totPaid : null;
 
   const setK = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  setK('kpi-spend', totSpend > 0 ? fmtM(totSpend) : '—');
-  setK('kpi-leads', totLeads > 0 ? fmtN(totLeads) : '—');
-  setK('kpi-cpl',   avgCpl != null ? fmtM(avgCpl) : '—');
+  setK('kpi-spend', totSpend > 0    ? fmtM(totSpend) : '—');
+  setK('kpi-leads', totLeads > 0    ? fmtN(totLeads) : '—');
+  setK('kpi-cpl',   avgCpl != null  ? fmtM(avgCpl)   : '—');
 
   if (totLeads > 0) {
     const ch  = { Paid: totPaid, Direct: totDir, Organic: totOrg };
@@ -447,13 +460,11 @@ function buildTable() {
   let body = '';
 
   SECTIONS.forEach((sec, si) => {
-    // Section banner row (label visible + sticky when scrolling left)
     body += `<tr class="sec-banner ${sec.css}${si === 0 ? ' first' : ''}">
       <td class="lc">${sec.label}</td>
       <td class="fill" colspan="${N}"></td>
     </tr>`;
 
-    // Data rows
     sec.rows.forEach((row, ri) => {
       const cls = [
         'sec-' + sec.css,
@@ -483,9 +494,8 @@ function attachEditable() {
   document.querySelectorAll('.ec').forEach(cell => {
     const key     = cell.dataset.key;
     const ci      = parseInt(cell.dataset.col, 10);
-    const isMoney = (key === 'adSpend');
+    const isMoney = (key === 'gSpend' || key === 'msSpend');
 
-    // On focus: show raw number, select all
     cell.addEventListener('focus', () => {
       const raw = DATA[ci][key];
       cell.textContent = raw > 0 ? String(raw) : '';
@@ -496,7 +506,6 @@ function attachEditable() {
       sel.addRange(range);
     });
 
-    // On blur: store parsed value, format display
     cell.addEventListener('blur', () => {
       const raw = parseInt(cell.textContent.replace(/[^0-9]/g, ''), 10) || 0;
       DATA[ci][key] = raw;
@@ -504,7 +513,6 @@ function attachEditable() {
       recalcCol(ci);
     });
 
-    // Digits only; Enter moves to next month in same row
     cell.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -524,7 +532,10 @@ function attachEditable() {
 // ── Clear all ─────────────────────────────────────────────────────────────────
 function clearAll() {
   if (!confirm('Clear all entered data?')) return;
-  DATA.forEach(d => { d.adSpend = 0; d.paidLeads = 0; d.directLeads = 0; d.organicLeads = 0; });
+  DATA.forEach(d => {
+    d.gSpend = 0; d.gLeads = 0; d.msSpend = 0; d.msLeads = 0;
+    d.directLeads = 0; d.organicLeads = 0;
+  });
   document.querySelectorAll('.ec').forEach(el => { el.textContent = ''; });
   document.querySelectorAll('.ac').forEach(el => { el.textContent = '—'; });
   ['kpi-spend','kpi-leads','kpi-cpl'].forEach(id => {
@@ -537,8 +548,10 @@ function clearAll() {
 // ── Populate from seed ────────────────────────────────────────────────────────
 function populate() {
   SEED.forEach((s, ci) => {
-    DATA[ci].adSpend      = s.adSpend;
-    DATA[ci].paidLeads    = s.paidLeads;
+    DATA[ci].gSpend       = s.gSpend;
+    DATA[ci].gLeads       = s.gLeads;
+    DATA[ci].msSpend      = s.msSpend;
+    DATA[ci].msLeads      = s.msLeads;
     DATA[ci].directLeads  = s.directLeads;
     DATA[ci].organicLeads = s.organicLeads;
 
@@ -546,8 +559,10 @@ function populate() {
       const el = document.querySelector(`.ec[data-key="${key}"][data-col="${ci}"]`);
       if (el) el.textContent = val > 0 ? (money ? fmtM(val) : fmtN(val)) : '';
     };
-    setCell('adSpend',      s.adSpend,      true);
-    setCell('paidLeads',    s.paidLeads,    false);
+    setCell('gSpend',       s.gSpend,       true);
+    setCell('gLeads',       s.gLeads,       false);
+    setCell('msSpend',      s.msSpend,      true);
+    setCell('msLeads',      s.msLeads,      false);
     setCell('directLeads',  s.directLeads,  false);
     setCell('organicLeads', s.organicLeads, false);
 
@@ -577,7 +592,45 @@ function populate() {
 })();
 
 document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
 document.getElementById('btnClear').addEventListener('click', clearAll);
+
+document.getElementById('btnPDF').addEventListener('click', () => {
+  const s = document.createElement('style');
+  s.id = '__pdf-override';
+  s.textContent = `
+    @media print {
+      @page {
+        size: 297mm 167mm landscape;
+        margin: 8mm;
+      }
+      body, table, td, th { font-size: 7px !important; }
+      thead th { padding: 4px 5px !important; font-size: 7px !important; }
+      tbody td { padding: 3px 5px !important; font-size: 7px !important; }
+      tr.sec-banner td { padding: 3px 5px !important; font-size: 7px !important; }
+      .lc     { width: 130px !important; min-width: 130px !important; font-size: 7px !important; }
+      th.h-lbl{ width: 130px !important; min-width: 130px !important; }
+      .ec, .ac{ min-width: 0 !important; font-size: 7px !important; }
+      th.h-mon{ min-width: 0 !important; }
+      .kpi-val{ font-size: 14px !important; }
+      .sidebar{ display: none !important; }
+      .legend { display: none !important; }
+      .page   { height: auto; overflow: visible; }
+      .layout { display: block; overflow: visible; }
+      .tbl-wrap { overflow: visible; padding: 4px !important; }
+      .btn    { display: none !important; }
+      * { position: static !important; }
+      table { width: 100% !important; table-layout: fixed !important; }
+      thead th, tr.sec-banner td, .ec, .ac {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  `;
+  document.head.appendChild(s);
+  window.print();
+  window.addEventListener('afterprint', () => s.remove(), { once: true });
+});
 </script>
 </body>
 </html>
