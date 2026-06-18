@@ -175,36 +175,54 @@
       white-space: nowrap;
     }
 
-    tr.alt .lc { background: #f4f6f8; }
-
-    /* Section banner rows */
+    /* ── Section banner rows ────────────────────────────────────────────────── */
     tr.sec-banner td {
       padding: 7px 14px;
-      background: #f8fafc;
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      border-top: 2px solid var(--border);
-      border-bottom: 1px solid var(--border);
+      border-top: 2px solid rgba(0,0,0,0.12);
+      border-bottom: 1px solid rgba(0,0,0,0.12);
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
 
     tr.sec-banner.first td { border-top: none; }
 
-    tr.sec-banner td.lc { z-index: 2; background: #f8fafc; }
-    tr.sec-banner td.fill { background: #f8fafc; }
+    /* Banner background colors */
+    tr.sec-banner.google     td { background: #1e3a5f; color: #fff; }
+    tr.sec-banner.microsoft  td { background: #1e3a5f; color: #fff; }
+    tr.sec-banner.paidtotals td { background: #1e40af; color: #fff; }
+    tr.sec-banner.direct     td { background: #c2410c; color: #fff; }
+    tr.sec-banner.organic    td { background: #15803d; color: #fff; }
+    tr.sec-banner.total      td { background: #111111; color: #fff; }
 
-    tr.sec-banner.paid    td.lc { border-left: 4px solid var(--paid);    color: var(--paid); }
-    tr.sec-banner.direct  td.lc { border-left: 4px solid var(--direct);  color: var(--direct); }
-    tr.sec-banner.organic td.lc { border-left: 4px solid var(--organic); color: var(--organic); }
-    tr.sec-banner.total   td.lc { border-left: 4px solid var(--total);   color: var(--total); }
+    /* Sticky .lc in banners — needs own bg so it doesn't show through on scroll */
+    tr.sec-banner.google     td.lc { background: #1e3a5f; z-index: 2; }
+    tr.sec-banner.microsoft  td.lc { background: #1e3a5f; z-index: 2; }
+    tr.sec-banner.paidtotals td.lc { background: #1e40af; z-index: 2; }
+    tr.sec-banner.direct     td.lc { background: #c2410c; z-index: 2; }
+    tr.sec-banner.organic    td.lc { background: #15803d; z-index: 2; }
+    tr.sec-banner.total      td.lc { background: #111111; z-index: 2; }
 
-    tr.sec-paid    .lc { border-left: 3px solid rgba(59, 130, 246, 0.2); }
-    tr.sec-direct  .lc { border-left: 3px solid rgba(245,158,11,  0.2); }
-    tr.sec-organic .lc { border-left: 3px solid rgba(16, 185,129, 0.2); }
-    tr.sec-total   .lc { border-left: 3px solid rgba(51, 65,  85,  0.15); }
+    /* ── Data row backgrounds ────────────────────────────────────────────────── */
+    /* tr.sec-X td covers non-label cells; td.lc rule has higher specificity     */
+    /* to win over tr.alt .lc; .ec/.ac keep their own !important backgrounds     */
+    tr.sec-google     td { background: #dbeafe; color: #1e3a5f; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tr.sec-microsoft  td { background: #fef3c7; color: #92400e; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tr.sec-paidtotals td { background: #dbeafe; color: #1e40af; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tr.sec-direct     td { background: #fff7ed; color: #92400e; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tr.sec-organic    td { background: #f0fdf4; color: #166534; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tr.sec-total      td { background: #f9fafb; color: var(--text); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* Sticky label column per section — specificity (0,2,2) beats tr.alt .lc (0,2,1) */
+    tr.sec-google     td.lc { background: #dbeafe; color: #1e3a5f; font-weight: 600; }
+    tr.sec-microsoft  td.lc { background: #fef3c7; color: #92400e; font-weight: 600; }
+    tr.sec-paidtotals td.lc { background: #dbeafe; color: #1e40af; font-weight: 700; }
+    tr.sec-direct     td.lc { background: #fff7ed; color: #92400e; font-weight: 600; }
+    tr.sec-organic    td.lc { background: #f0fdf4; color: #166534; font-weight: 600; }
+    tr.sec-total      td.lc { background: #f9fafb; color: var(--text); font-weight: 600; }
 
     .ec {
       text-align: right;
@@ -353,7 +371,7 @@ const fmtPct = v => (v == null || isNaN(v)) ? '—' : Math.round(v * 100) + '%';
 // ── Section / row schema ──────────────────────────────────────────────────────
 const SECTIONS = [
   {
-    key: 'google', label: 'PAID — GOOGLE', css: 'paid',
+    key: 'google', label: 'PAID — GOOGLE', css: 'google',
     rows: [
       { lbl: 'Ad Spend',      key: 'gSpend', edit: true  },
       { lbl: 'Leads',         key: 'gLeads', edit: true  },
@@ -361,7 +379,7 @@ const SECTIONS = [
     ],
   },
   {
-    key: 'microsoft', label: 'PAID — MICROSOFT', css: 'paid',
+    key: 'microsoft', label: 'PAID — MICROSOFT', css: 'microsoft',
     rows: [
       { lbl: 'Ad Spend',      key: 'msSpend', edit: true  },
       { lbl: 'Leads',         key: 'msLeads', edit: true  },
@@ -369,7 +387,7 @@ const SECTIONS = [
     ],
   },
   {
-    key: 'paidtotals', label: 'PAID TOTALS', css: 'paid',
+    key: 'paidtotals', label: 'PAID TOTALS', css: 'paidtotals',
     rows: [
       { lbl: 'Total Ad Spend', key: 'paidSpend', edit: false },
       { lbl: 'Total Leads',    key: 'paidLeads', edit: false },
