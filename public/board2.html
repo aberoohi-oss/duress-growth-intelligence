@@ -274,39 +274,39 @@
       /* Clean print title */
       .print-title {
         display: block !important;
-        padding: 0 0 10px;
+        padding: 0 0 8px;
         border-bottom: 2px solid #1e3a5f;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
+        flex-shrink: 0;
       }
-      .print-title h1 { font-size: 15px; font-weight: 700; color: #000; letter-spacing: -0.2px; }
-      .print-title p  { font-size: 10px; color: #555; margin-top: 3px; }
+      .print-title h1 { font-size: 14px; font-weight: 700; color: #000; letter-spacing: -0.2px; }
+      .print-title p  { font-size: 10px; color: #555; margin-top: 2px; }
 
-      /* Layout — block so sidebar flows below table */
-      .page     { height: auto; overflow: visible; }
-      .layout   { display: block !important; overflow: visible; }
-      .tbl-wrap { overflow: visible; padding: 0; }
+      /* Layout — keep flex row so sidebar stays on the right */
+      .page     { height: auto !important; overflow: visible !important; }
+      .layout   { display: flex !important; flex-direction: row !important; overflow: visible !important; height: auto !important; }
+      .tbl-wrap { overflow: visible !important; padding: 0; flex: 1; }
 
-      /* KPI sidebar → compact horizontal row below table */
+      /* Sidebar — stays vertical on the right, made compact */
       .sidebar {
         display: flex !important;
-        flex-direction: row !important;
-        width: 100% !important;
-        min-width: 0 !important;
-        border-left: none !important;
-        padding: 10px 0 0 !important;
-        gap: 10px !important;
-        background: transparent !important;
+        flex-direction: column !important;
+        width: 180px !important;
+        min-width: 180px !important;
         overflow: visible !important;
+        padding: 0 0 0 10px !important;
+        gap: 8px !important;
+        background: transparent !important;
+        border-left: 1px solid #e2e8f0 !important;
       }
       .kpi {
-        flex: 1 !important;
-        padding: 8px 12px !important;
-        border-radius: 6px !important;
+        padding: 8px 10px !important;
+        border-radius: 5px !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
-      .kpi-lbl { font-size: 9px !important; }
-      .kpi-val { font-size: 16px !important; }
+      .kpi-lbl { font-size: 8px !important; }
+      .kpi-val { font-size: 15px !important; }
       .kpi-sub { display: none; }
 
       /* Table — collapse borders for spreadsheet look */
@@ -690,23 +690,23 @@ document.getElementById('btnPDF').addEventListener('click', () => {
   s.id = '__pdf-override';
   s.textContent = `
     @media print {
-      @page { size: 297mm 167mm landscape; margin: 8mm; }
-      body, table, td, th { font-size: 7px !important; }
-      thead th      { padding: 3px 4px !important; font-size: 7px !important; }
-      tbody td      { padding: 2px 4px !important; font-size: 7px !important; }
-      tr.sec-banner td { padding: 3px 4px !important; font-size: 7px !important; }
-      .lc           { width: 120px !important; min-width: 120px !important; }
-      th.h-lbl      { width: 120px !important; min-width: 120px !important; }
-      .ec, .ac      { min-width: 0 !important; }
-      th.h-mon      { min-width: 0 !important; }
-      table         { width: 100% !important; table-layout: fixed !important; }
-      .print-title h1 { font-size: 10px !important; }
-      .print-title p  { font-size: 7px !important; }
-      .print-title    { padding-bottom: 5px !important; margin-bottom: 5px !important; }
-      .sidebar        { gap: 5px !important; padding-top: 5px !important; }
-      .kpi            { padding: 4px 6px !important; }
-      .kpi-lbl        { font-size: 6px !important; }
-      .kpi-val        { font-size: 9px !important; }
+      @page { size: 297mm 167mm landscape; margin: 6mm; }
+      body, table, td, th { font-size: 6.5px !important; }
+      thead th         { padding: 3px 4px !important; font-size: 6.5px !important; }
+      tbody td         { padding: 2px 4px !important; font-size: 6.5px !important; }
+      tr.sec-banner td { padding: 3px 4px !important; font-size: 6.5px !important; }
+      .lc              { width: 108px !important; min-width: 108px !important; font-size: 6.5px !important; }
+      th.h-lbl         { width: 108px !important; min-width: 108px !important; }
+      .ec, .ac         { min-width: 0 !important; }
+      th.h-mon         { min-width: 0 !important; }
+      table            { width: 100% !important; table-layout: fixed !important; }
+      .print-title h1  { font-size: 9px !important; }
+      .print-title p   { font-size: 6.5px !important; }
+      .print-title     { padding-bottom: 4px !important; margin-bottom: 4px !important; }
+      .sidebar         { width: 140px !important; min-width: 140px !important; gap: 4px !important; padding-left: 6px !important; }
+      .kpi             { padding: 4px 6px !important; }
+      .kpi-lbl         { font-size: 5.5px !important; }
+      .kpi-val         { font-size: 8px !important; }
     }
   `;
   document.head.appendChild(s);
