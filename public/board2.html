@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Duress — Board Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --paid:    #3b82f6;
+      --direct:  #f59e0b;
+      --organic: #10b981;
+      --total:   #334155;
+      --navy:    #0f172a;
+      --border:  #e2e8f0;
+      --dim:     #94a3b8;
+      --text:    #1e293b;
+      --alt:     #f9f9f9;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f1f5f9;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .page {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Header ────────────────────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: var(--navy);
+      flex-shrink: 0;
+    }
+
+    .hd-title h1 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    .hd-title p {
+      font-size: 11px;
+      color: var(--dim);
+      margin-top: 2px;
+    }
+
+    .hd-actions { display: flex; gap: 10px; }
+
+    .btn {
+      padding: 7px 16px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+      line-height: 1;
+    }
+
+    .btn:hover { background: rgba(255,255,255,0.16); }
+    .btn-blue  { background: var(--paid); border-color: #2563eb; }
+    .btn-blue:hover { background: #2563eb; }
+
+    /* ── Body layout ───────────────────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .tbl-wrap {
+      flex: 1;
+      overflow: auto;
+      padding: 20px;
+    }
+
+    /* ── KPI Sidebar ───────────────────────────────────────────────────────── */
+    .sidebar {
+      width: 232px;
+      min-width: 232px;
+      background: #f8fafc;
+      border-left: 1px solid var(--border);
+      padding: 20px 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .kpi {
+      background: #fff;
+      border-radius: 10px;
+      border-top: 3px solid var(--kc, var(--paid));
+      padding: 14px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 0 0 1px var(--border);
+    }
+
+    .kpi-lbl {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--dim);
+      margin-bottom: 5px;
+    }
+
+    .kpi-val {
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.15;
+    }
+
+    .kpi-sub {
+      font-size: 10px;
+      color: var(--dim);
+      margin-top: 3px;
+    }
+
+    /* ── Table ─────────────────────────────────────────────────────────────── */
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: max-content;
+      min-width: 100%;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px var(--border);
+    }
+
+    /* Header row */
+    thead th {
+      background: var(--navy);
+      color: rgba(255,255,255,0.9);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 12px 14px;
+      white-space: nowrap;
+      text-align: right;
+      border-bottom: 2px solid #1c3353;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    th.h-sec {
+      width: 40px;
+      min-width: 40px;
+      position: sticky;
+      left: 0;
+      z-index: 4;
+      border-right: 1px solid rgba(255,255,255,0.07);
+    }
+
+    th.h-lbl {
+      text-align: left;
+      width: 180px;
+      min-width: 180px;
+      position: sticky;
+      left: 40px;
+      z-index: 4;
+      border-right: 1px solid rgba(255,255,255,0.07);
+    }
+
+    th.h-mon { min-width: 112px; }
+    th.h-mon.partial { color: #93c5fd; }
+
+    /* Body cells */
+    tbody td {
+      padding: 0 14px;
+      height: 44px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    /* Section label cell */
+    .sc {
+      width: 40px;
+      min-width: 40px;
+      text-align: center;
+      vertical-align: middle;
+      writing-mode: vertical-lr;
+      transform: rotate(180deg);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      position: sticky;
+      left: 0;
+      z-index: 2;
+    }
+
+    .sc.paid    { border-left: 4px solid var(--paid);    color: var(--paid);    background: #eff6ff; }
+    .sc.direct  { border-left: 4px solid var(--direct);  color: var(--direct);  background: #fffbeb; }
+    .sc.organic { border-left: 4px solid var(--organic); color: var(--organic); background: #ecfdf5; }
+    .sc.total   { border-left: 4px solid var(--total);   color: var(--total);   background: #f8fafc; }
+
+    /* Metric label cell */
+    .lc {
+      width: 180px;
+      min-width: 180px;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: left;
+      position: sticky;
+      left: 40px;
+      z-index: 2;
+      background: #fff;
+      border-right: 1px solid var(--border);
+    }
+
+    tr.alt .lc { background: var(--alt); }
+
+    /* Data cell */
+    .dc {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      min-width: 112px;
+    }
+
+    tr.alt .dc { background: var(--alt); }
+    .dc.dim    { color: var(--dim); }
+
+    /* Section first-row divider (between sections) */
+    tr.s1 td       { border-top: 2px solid #cbd5e1; }
+    tr.s1 td.sc    { border-top: none; }
+
+    /* Total section emphasis */
+    tr.stotal .lc { font-weight: 600; }
+    tr.stotal .dc { font-weight: 500; }
+
+    /* State messages */
+    .state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      height: 240px;
+      color: var(--dim);
+      font-size: 13px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--paid);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+
+    /* ── Print ─────────────────────────────────────────────────────────────── */
+    @media print {
+      @page { size: A3 landscape; margin: 12mm; }
+
+      .page    { height: auto; overflow: visible; }
+      header   { background: #fff !important; border-bottom: 1px solid #000; padding: 8px 0; }
+      .btn     { display: none; }
+      .hd-title h1 { color: #000; font-size: 14px; }
+      .hd-title p  { color: #555; }
+      .layout  { display: block; overflow: visible; }
+      .tbl-wrap{ overflow: visible; padding: 0; }
+      .sidebar { display: none; }
+
+      table    { box-shadow: none; width: 100%; border: 1px solid #ccc; }
+      thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .sc      { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      * { position: static !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="hd-title">
+      <h1>Growth Performance &mdash; Board Dashboard</h1>
+      <p id="subtitle">Loading&hellip;</p>
+    </div>
+    <div class="hd-actions">
+      <button class="btn" id="btnRefresh">&#8635;&ensp;Refresh</button>
+      <button class="btn btn-blue" id="btnPrint">&#9113;&ensp;Print</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="tbl-wrap" id="tblWrap">
+      <div class="state" id="loadMsg"><div class="spinner"></div>Loading 13 months&hellip;</div>
+    </div>
+    <aside class="sidebar" id="sidebar"></aside>
+  </div>
+</div>
+
+<script>
+// ── Formatters ──────────────────────────────────────────────────────────────
+const fmtM = v => {
+  if (v == null || isNaN(v)) return '—';
+  if (v === 0) return '$0';
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+  if (v >= 1e4) return '$' + Math.round(v / 1e3) + 'k';
+  return '$' + Math.round(v).toLocaleString('en-AU');
+};
+const fmtN = v => (v == null || v === 0) ? '—' : Number(v).toLocaleString('en-AU');
+const fmtX = v => (v == null || v === 0) ? '—' : v.toFixed(2) + 'x';
+
+// ── Date helpers ─────────────────────────────────────────────────────────────
+const MNAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function last13Months() {
+  const now = new Date(), out = [];
+  for (let i = 12; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const y = d.getFullYear(), m = d.getMonth();
+    out.push({
+      start:     `${y}-${String(m+1).padStart(2,'0')}-01`,
+      end:       `${y}-${String(m+1).padStart(2,'0')}-${String(new Date(y,m+1,0).getDate()).padStart(2,'0')}`,
+      label:     `${MNAMES[m]} '${String(y).slice(-2)}`,
+      isCurrent: i === 0,
+    });
+  }
+  return out;
+}
+
+// ── Fetch ────────────────────────────────────────────────────────────────────
+async function fetchMonth({ start, end }) {
+  const r = await fetch(`/api/analytics?startDate=${start}&endDate=${end}`);
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+// ── Process API response into display metrics ────────────────────────────────
+function processMonth(d) {
+  if (!d) return null;
+  const sb   = d.sourceBreakdown || {};
+  const tot  = d.totals         || {};
+  const dr   = d.dealRevenue    || {};
+
+  const gLeads = sb.google  || 0;
+  const bLeads = sb.bing    || 0;
+  const pLeads = gLeads + bLeads;
+  const oLeads = sb.organic || 0;
+  const dLeads = sb.direct  || 0;
+  const tLeads = pLeads + oLeads + dLeads;
+
+  const spend = tot.spend          || 0;
+  const rev   = dr.closedRevenue   || 0;
+  const pipe  = dr.pipelineValue   || 0;
+
+  return {
+    paid: {
+      adSpend:       spend,
+      leads:         pLeads,
+      cpl:           pLeads > 0  ? spend / pLeads : null,
+      closedRevenue: rev,
+      roas:          spend > 0   ? rev   / spend  : null,
+      google:        gLeads,
+      bing:          bLeads,
+    },
+    direct:  { leads: dLeads },
+    organic: { leads: oLeads },
+    total: {
+      totalLeads:    tLeads,
+      adSpend:       spend,
+      avgCpl:        tLeads > 0  ? spend / tLeads : null,
+      pipelineValue: pipe,
+      closedRevenue: rev,
+    },
+  };
+}
+
+// ── Section / row definitions ────────────────────────────────────────────────
+const SECTIONS = [
+  {
+    key: 'paid', label: 'PAID', css: 'paid',
+    rows: [
+      { lbl: 'Ad Spend',       fn: d => fmtM(d.paid.adSpend),       dim: d => !d.paid.adSpend },
+      { lbl: 'Leads',          fn: d => fmtN(d.paid.leads),          dim: d => !d.paid.leads },
+      { lbl: 'Cost Per Lead',  fn: d => fmtM(d.paid.cpl),            dim: d => d.paid.cpl == null },
+      { lbl: 'Closed Revenue', fn: d => fmtM(d.paid.closedRevenue),  dim: d => !d.paid.closedRevenue },
+      { lbl: 'ROAS',           fn: d => fmtX(d.paid.roas),           dim: d => d.paid.roas == null },
+    ],
+  },
+  {
+    key: 'direct', label: 'DIRECT', css: 'direct',
+    rows: [
+      { lbl: 'Leads', fn: d => fmtN(d.direct.leads), dim: d => !d.direct.leads },
+    ],
+  },
+  {
+    key: 'organic', label: 'ORGANIC', css: 'organic',
+    rows: [
+      { lbl: 'Leads', fn: d => fmtN(d.organic.leads), dim: d => !d.organic.leads },
+    ],
+  },
+  {
+    key: 'total', label: 'TOTAL', css: 'total',
+    rows: [
+      { lbl: 'Total Leads',    fn: d => fmtN(d.total.totalLeads),    dim: d => !d.total.totalLeads },
+      { lbl: 'Total Ad Spend', fn: d => fmtM(d.total.adSpend),       dim: d => !d.total.adSpend },
+      { lbl: 'Avg CPL',        fn: d => fmtM(d.total.avgCpl),        dim: d => d.total.avgCpl == null },
+      { lbl: 'Pipeline Value', fn: d => fmtM(d.total.pipelineValue), dim: d => !d.total.pipelineValue },
+      { lbl: 'Closed Revenue', fn: d => fmtM(d.total.closedRevenue), dim: d => !d.total.closedRevenue },
+    ],
+  },
+];
+
+// ── Build table HTML ──────────────────────────────────────────────────────────
+function buildTable(months, data) {
+  const headCols = months.map(m =>
+    `<th class="h-mon${m.isCurrent ? ' partial' : ''}">${m.label}${m.isCurrent ? '&thinsp;*' : ''}</th>`
+  ).join('');
+
+  const head = `<thead><tr>
+    <th class="h-sec"></th>
+    <th class="h-lbl">Metric</th>
+    ${headCols}
+  </tr></thead>`;
+
+  let body = '';
+  SECTIONS.forEach((sec, si) => {
+    sec.rows.forEach((row, ri) => {
+      const first = ri === 0;
+      const cls = [
+        first && si > 0 ? 's1' : '',
+        ri % 2 === 1    ? 'alt' : '',
+        sec.key === 'total' ? 'stotal' : '',
+      ].filter(Boolean).join(' ');
+
+      let cells = '';
+
+      if (first) {
+        cells += `<td class="sc ${sec.css}" rowspan="${sec.rows.length}">${sec.label}</td>`;
+      }
+
+      cells += `<td class="lc">${row.lbl}</td>`;
+
+      for (let i = 0; i < months.length; i++) {
+        const d = data[i];
+        if (!d) { cells += `<td class="dc dim">—</td>`; continue; }
+        const val = row.fn(d);
+        const isDim = row.dim(d);
+        cells += `<td class="dc${isDim ? ' dim' : ''}">${val}</td>`;
+      }
+
+      body += `<tr${cls ? ` class="${cls}"` : ''}>${cells}</tr>`;
+    });
+  });
+
+  return `<table>${head}<tbody>${body}</tbody></table>`;
+}
+
+// ── Build KPI sidebar ─────────────────────────────────────────────────────────
+function buildKPIs(data) {
+  const valid = data.filter(Boolean);
+  if (!valid.length) {
+    return '<p style="color:var(--dim);font-size:12px;text-align:center;padding-top:20px">No data</p>';
+  }
+
+  const totalSpend   = valid.reduce((s, d) => s + d.paid.adSpend,       0);
+  const totalLeads   = valid.reduce((s, d) => s + d.total.totalLeads,   0);
+  const paidLeads    = valid.reduce((s, d) => s + d.paid.leads,         0);
+  const totalRevenue = valid.reduce((s, d) => s + d.paid.closedRevenue, 0);
+  const avgCpl       = paidLeads > 0 ? totalSpend / paidLeads : null;
+
+  const channels = {
+    Google:  valid.reduce((s, d) => s + d.paid.google,   0),
+    Bing:    valid.reduce((s, d) => s + d.paid.bing,     0),
+    Organic: valid.reduce((s, d) => s + d.organic.leads, 0),
+    Direct:  valid.reduce((s, d) => s + d.direct.leads,  0),
+  };
+  const top = Object.entries(channels).sort((a, b) => b[1] - a[1])[0][0];
+  const topColor = { Google: 'var(--paid)', Bing: '#0078d4', Organic: 'var(--organic)', Direct: 'var(--direct)' };
+
+  const card = (lbl, val, color, sub = '') => `
+    <div class="kpi" style="--kc:${color}">
+      <div class="kpi-lbl">${lbl}</div>
+      <div class="kpi-val">${val}</div>
+      ${sub ? `<div class="kpi-sub">${sub}</div>` : ''}
+    </div>`;
+
+  return [
+    card('Total Ad Spend',  fmtM(totalSpend),  'var(--paid)'),
+    card('Total Leads',     fmtN(totalLeads),  'var(--total)'),
+    card('Avg Cost/Lead',   fmtM(avgCpl),      'var(--paid)',    'paid leads, 13-month avg'),
+    card('Closed Revenue',  fmtM(totalRevenue),'var(--organic)'),
+    card('Top Channel',
+      `<span style="color:${topColor[top]}">${top}</span>`,
+      topColor[top]),
+  ].join('');
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const months  = last13Months();
+  const wrap    = document.getElementById('tblWrap');
+  const sidebar = document.getElementById('sidebar');
+  const msg     = document.getElementById('loadMsg');
+  const sub     = document.getElementById('subtitle');
+
+  sub.textContent = `${months[0].label} – ${months[12].label}  ·  * current month is partial`;
+
+  let loaded = 0;
+  const results = await Promise.allSettled(
+    months.map(async m => {
+      const d = await fetchMonth(m);
+      loaded++;
+      if (msg) msg.innerHTML = `<div class="spinner"></div>Loading ${loaded} / 13 months&hellip;`;
+      return d;
+    })
+  );
+
+  const data = results.map(r => processMonth(r.status === 'fulfilled' ? r.value : null));
+
+  if (msg) msg.remove();
+  wrap.innerHTML    = buildTable(months, data);
+  sidebar.innerHTML = buildKPIs(data);
+}
+
+function reset() {
+  document.getElementById('tblWrap').innerHTML  = '<div class="state"><div class="spinner"></div>Refreshing&hellip;</div>';
+  document.getElementById('sidebar').innerHTML  = '';
+  init();
+}
+
+document.getElementById('btnRefresh').addEventListener('click', reset);
+document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
+init();
+</script>
+</body>
+</html>

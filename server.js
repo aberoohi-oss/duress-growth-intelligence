@@ -75,8 +75,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Board meeting dashboard
-app.get('/board', (req, res) => res.sendFile(path.join(__dirname, 'public/board.html')));
+// Board meeting dashboards
+app.get('/board',  (req, res) => res.sendFile(path.join(__dirname, 'public/board.html')));
+app.get('/board2', (req, res) => res.sendFile(path.join(__dirname, 'public/board2.html')));
 
 // Catch-all: serve the SPA for any non-API, non-asset route
 app.get('*', (req, res) => {
