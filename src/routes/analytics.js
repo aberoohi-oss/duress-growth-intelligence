@@ -55,7 +55,7 @@ router.get('/', async (req, res) => {
     const data = await fetchAll(range.start, range.end);
 
     const allAdCampaigns = [...data.googleCampaigns, ...data.bingCampaigns];
-    const { campaigns, totals } = mergeCampaigns(allAdCampaigns, data.hubspotLeads, data.dealRevenue);
+    const { campaigns, totals, sourceBreakdown } = mergeCampaigns(allAdCampaigns, data.hubspotLeads, data.dealRevenue);
 
     const { byDate: dailyLeads } = groupLeads(data.hubspotLeads);
     const timeSeries = buildTimeSeries(
@@ -76,6 +76,7 @@ router.get('/', async (req, res) => {
       errors:    data.errors,
       totals,
       campaigns,
+      sourceBreakdown,
       timeSeries,
       dealRevenue: {
         openDealCount:  data.dealRevenue.openDealCount,

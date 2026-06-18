@@ -322,8 +322,9 @@
       <table id="boardTable"></table>
       <p class="footnote">
         * Current month is partial (through today).
-        &nbsp;Direct = all HubSpot contacts not attributed to a paid channel.
-        &nbsp;Organic breakdown requires additional UTM attribution data.
+        &nbsp;Paid = utm_source google/bing or hs_analytics_source PAID_SEARCH (split by spend share).
+        &nbsp;Organic = hs_analytics_source ORGANIC_SEARCH.
+        &nbsp;Direct = all remaining contacts.
       </p>
     </div>
   </div>
@@ -412,7 +413,9 @@ function processMonthData(d) {
   const paidSpend = g.spend + ms.spend;
   const paidLeads = g.leads + ms.leads;
   const closedRev = tot.closedRevenue || 0;
-  const nonPaid   = Math.max(0, total - paidLeads);
+  const sb = d.sourceBreakdown || {};
+  const directLeads  = sb.direct  != null ? (sb.direct  || 0) : Math.max(0, total - paidLeads);
+  const organicLeads = sb.organic != null ? (sb.organic || 0) : 0;
 
   return {
     g,
@@ -427,12 +430,12 @@ function processMonthData(d) {
       roas:    paidSpend > 0 && closedRev > 0 ? closedRev / paidSpend : null,
     },
     direct: {
-      leads: nonPaid,
-      pct:   total > 0 ? (nonPaid / total) * 100 : null,
+      leads: directLeads,
+      pct:   total > 0 ? (directLeads  / total) * 100 : null,
     },
     organic: {
-      leads: null,
-      pct:   null,
+      leads: organicLeads,
+      pct:   total > 0 ? (organicLeads / total) * 100 : null,
     },
     perf: {
       leads:    total,
@@ -499,8 +502,8 @@ const SECTIONS = [
   {
     id: 'organic', label: 'Organic', cls: 's-organic',
     rows: [
-      { label: 'Leads',     f: () => '—' },
-      { label: '% Organic', f: () => '—' },
+      { label: 'Leads',     f: d => fNum(d.organic.leads) },
+      { label: '% Organic', f: d => fPct(d.organic.pct)  },
     ],
   },
   {

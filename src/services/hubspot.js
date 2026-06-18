@@ -10,9 +10,10 @@ function getClient() {
 function isConfigured() { return !!process.env.HUBSPOT_ACCESS_TOKEN; }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const SALES_PIPELINE_ID = '655395635';
-const CLOSE_WON_STAGE   = '1176703755';
-const QUOTE_FORM_TOKEN  = 'Free Quote Form';
+const SALES_PIPELINE_ID  = '655395635';
+const CLOSE_WON_STAGE    = '1176703755';
+const CLOSE_LOST_STAGE   = '1176703756';  // terminal — excluded from pipeline
+const DISQUALIFIED_STAGE = '2507535803';  // terminal — excluded from pipeline
 
 const LEAD_PROPERTIES = [
   'createdate',
@@ -38,8 +39,8 @@ async function paginate(searchFn, filterGroups, properties, extraOpts = {}) {
 
 // ─── Leads ────────────────────────────────────────────────────────────────────
 /**
- * Contacts who submitted the Paid Search Free Quote Form, created within date range.
- * Returns raw contact objects — attribution.js does the grouping.
+ * All contacts created within the date range.
+ * attribution.js classifies them by utm_source / hs_analytics_source.
  */
 async function getLeads(startDate, endDate) {
   if (!isConfigured()) { logger.warn('HubSpot not configured — skipping leads'); return []; }
@@ -48,14 +49,13 @@ async function getLeads(startDate, endDate) {
   const endTs   = new Date(endDate + 'T23:59:59').getTime();
   const client  = getClient();
 
-  logger.info('Fetching HubSpot leads', { startDate, endDate, form: QUOTE_FORM_TOKEN });
+  logger.info('Fetching HubSpot leads', { startDate, endDate });
 
   try {
     const results = await paginate(
       (opts) => client.crm.contacts.searchApi.doSearch(opts),
       [{
         filters: [
-          { propertyName: 'first_conversion_event_name', operator: 'CONTAINS_TOKEN', value: QUOTE_FORM_TOKEN },
           { propertyName: 'createdate', operator: 'GTE', value: String(startTs) },
           { propertyName: 'createdate', operator: 'LTE', value: String(endTs) },
         ],
@@ -91,11 +91,10 @@ async function getDealRevenue(startDate, endDate) {
       (opts) => client.crm.deals.searchApi.doSearch(opts),
       [{
         filters: [
-          { propertyName: 'pipeline',   operator: 'EQ',            value: SALES_PIPELINE_ID },
-          { propertyName: 'dealstage',  operator: 'NOT_IN',        values: [CLOSE_WON_STAGE, '1176703756', '2507535803'] },
-          { propertyName: 'amount',     operator: 'HAS_PROPERTY' },
-          { propertyName: 'createdate', operator: 'GTE',           value: String(startTs) },
-          { propertyName: 'createdate', operator: 'LTE',           value: String(endTs) },
+          { propertyName: 'pipeline',   operator: 'EQ',     value: SALES_PIPELINE_ID },
+          { propertyName: 'dealstage',  operator: 'NOT_IN', values: [CLOSE_WON_STAGE, CLOSE_LOST_STAGE, DISQUALIFIED_STAGE] },
+          { propertyName: 'createdate', operator: 'GTE',    value: String(startTs) },
+          { propertyName: 'createdate', operator: 'LTE',    value: String(endTs) },
         ],
       }],
       DEAL_PROPERTIES

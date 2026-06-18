@@ -1,9 +1,8 @@
 const { calculate } = require('./metrics');
 const logger = require('./logger');
 
-// ─── Source normalisation ──────────────────────────────────────────────────────
-// Maps raw utm_source values → canonical source key used to match ad platforms
-const SOURCE_MAP = {
+// ─── Source classification ────────────────────────────────────────────────────
+const UTM_SOURCE_MAP = {
   google:       'google',
   'google ads': 'google',
   googleads:    'google',
@@ -14,8 +13,23 @@ const SOURCE_MAP = {
   'bing ads':   'bing',
 };
 
-function normaliseSource(s) {
-  return SOURCE_MAP[(s || '').toLowerCase().trim()] || (s || '').toLowerCase().trim();
+// HubSpot's hs_analytics_source enum → canonical key.
+// 'paid_search' is an intermediate key distributed across platforms in mergeCampaigns.
+const HS_SOURCE_MAP = {
+  PAID_SEARCH:     'paid_search',
+  ORGANIC_SEARCH:  'organic',
+  DIRECT_TRAFFIC:  'direct',
+  SOCIAL_MEDIA:    'direct',
+  EMAIL_MARKETING: 'direct',
+  REFERRALS:       'direct',
+  OTHER_CAMPAIGNS: 'direct',
+  OFFLINE:         'direct',
+};
+
+function classifySource(props) {
+  const utm = (props.utm_source || '').toLowerCase().trim();
+  if (utm) return UTM_SOURCE_MAP[utm] || utm;
+  return HS_SOURCE_MAP[(props.hs_analytics_source || '').toUpperCase().trim()] || 'direct';
 }
 
 // ─── Lead grouping ────────────────────────────────────────────────────────────
@@ -29,8 +43,7 @@ function groupLeads(contacts) {
 
   for (const c of contacts) {
     const props  = c.properties || {};
-    const source = normaliseSource(props.utm_source || props.hs_analytics_source || '');
-    if (!source) continue;
+    const source = classifySource(props);
     bySource[source] = (bySource[source] || 0) + 1;
 
     const day = (props.createdate || '').slice(0, 10);
@@ -101,7 +114,6 @@ function rollupToWeeks(daily) {
  */
 function mergeCampaigns(adCampaigns, hubspotContacts, dealRevenue) {
   const { bySource: leadsBySource } = groupLeads(hubspotContacts);
-  const totalLeads = Object.values(leadsBySource).reduce((s, c) => s + c, 0);
 
   // Group ad campaigns by source
   const adBySource = {};
@@ -117,6 +129,18 @@ function mergeCampaigns(adCampaigns, hubspotContacts, dealRevenue) {
     spendBySource[src] = camps.reduce((s, c) => s + c.spend, 0);
   }
   const totalSpend = Object.values(spendBySource).reduce((s, v) => s + v, 0);
+
+  // Distribute contacts tagged PAID_SEARCH (no utm_source) proportionally by platform spend.
+  const paidSearchLeads = leadsBySource['paid_search'] || 0;
+  if (paidSearchLeads > 0 && totalSpend > 0) {
+    for (const src of Object.keys(adBySource)) {
+      const frac = (spendBySource[src] || 0) / totalSpend;
+      leadsBySource[src] = (leadsBySource[src] || 0) + Math.round(paidSearchLeads * frac);
+    }
+    delete leadsBySource['paid_search'];
+  }
+
+  const totalLeads = Object.values(leadsBySource).reduce((s, c) => s + c, 0);
 
   const rows = [];
 
@@ -159,7 +183,15 @@ function mergeCampaigns(adCampaigns, hubspotContacts, dealRevenue) {
   // Totals row
   const totals = buildTotals(rows, totalLeads, dealRevenue);
 
-  return { campaigns: rows, totals };
+  // Expose the full source breakdown for the board dashboard
+  const sourceBreakdown = {
+    google:  leadsBySource['google']  || 0,
+    bing:    leadsBySource['bing']    || 0,
+    organic: leadsBySource['organic'] || 0,
+    direct:  leadsBySource['direct']  || 0,
+  };
+
+  return { campaigns: rows, totals, sourceBreakdown };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
