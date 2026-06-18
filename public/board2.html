@@ -19,6 +19,7 @@
       --dim:     #94a3b8;
       --text:    #1e293b;
       --alt:     #f9f9f9;
+      --sec-w:   60px;   /* section label column width */
     }
 
     body {
@@ -162,8 +163,8 @@
     }
 
     th.h-sec {
-      width: 40px;
-      min-width: 40px;
+      width: var(--sec-w);
+      min-width: var(--sec-w);
       position: sticky;
       left: 0;
       z-index: 4;
@@ -175,7 +176,7 @@
       width: 180px;
       min-width: 180px;
       position: sticky;
-      left: 40px;
+      left: var(--sec-w);
       z-index: 4;
       border-right: 1px solid rgba(255,255,255,0.07);
     }
@@ -193,8 +194,8 @@
 
     /* Section label cell */
     .sc {
-      width: 40px;
-      min-width: 40px;
+      width: var(--sec-w);
+      min-width: var(--sec-w);
       text-align: center;
       vertical-align: middle;
       writing-mode: vertical-lr;
@@ -222,7 +223,7 @@
       font-weight: 500;
       text-align: left;
       position: sticky;
-      left: 40px;
+      left: var(--sec-w);
       z-index: 2;
       background: #fff;
       border-right: 1px solid var(--border);
@@ -239,6 +240,22 @@
 
     tr.alt .dc { background: var(--alt); }
     .dc.dim    { color: var(--dim); }
+
+    /* Editable cells (Direct / Organic leads) */
+    .dc.editable {
+      background: #fffde7 !important;
+      border: 1px dashed #fbbf24 !important;
+      cursor: text;
+      outline: none;
+      caret-color: var(--text);
+      transition: background 0.1s, border-color 0.1s;
+    }
+
+    .dc.editable:focus {
+      background: #fef9c3 !important;
+      border-color: #d97706 !important;
+      box-shadow: 0 0 0 2px rgba(245,158,11,0.15);
+    }
 
     /* Section first-row divider (between sections) */
     tr.s1 td       { border-top: 2px solid #cbd5e1; }
@@ -287,6 +304,12 @@
       thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .sc      { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       * { position: static !important; }
+
+      .dc.editable {
+        background: transparent !important;
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+      }
     }
   </style>
 </head>
@@ -320,8 +343,9 @@ const fmtM = v => {
   if (v >= 1e4) return '$' + Math.round(v / 1e3) + 'k';
   return '$' + Math.round(v).toLocaleString('en-AU');
 };
-const fmtN = v => (v == null || v === 0) ? '—' : Number(v).toLocaleString('en-AU');
-const fmtX = v => (v == null || v === 0) ? '—' : v.toFixed(2) + 'x';
+const fmtN   = v  => (v == null || v === 0) ? '—' : Number(v).toLocaleString('en-AU');
+const fmtX   = v  => (v == null || v === 0) ? '—' : v.toFixed(2) + 'x';
+const fmtPct = v  => (v == null || isNaN(v)) ? '—' : Math.round(v * 100) + '%';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 const MNAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -348,18 +372,22 @@ async function fetchMonth({ start, end }) {
   return r.json();
 }
 
-// ── Process API response into display metrics ────────────────────────────────
+// ── Process API response ─────────────────────────────────────────────────────
+// Paid leads come from campaign.leads (summed by source) — not sourceBreakdown,
+// which is unreliable when HUBSPOT_ACCESS_TOKEN is missing on Railway.
 function processMonth(d) {
   if (!d) return null;
-  const sb   = d.sourceBreakdown || {};
-  const tot  = d.totals         || {};
-  const dr   = d.dealRevenue    || {};
+  const campaigns = d.campaigns || [];
+  const tot = d.totals      || {};
+  const dr  = d.dealRevenue || {};
 
-  const gLeads = sb.google  || 0;
-  const bLeads = sb.bing    || 0;
+  const gLeads = campaigns.filter(c => c.source === 'google').reduce((s, c) => s + (c.leads || 0), 0);
+  const bLeads = campaigns.filter(c => c.source === 'bing').reduce((s,   c) => s + (c.leads || 0), 0);
   const pLeads = gLeads + bLeads;
-  const oLeads = sb.organic || 0;
-  const dLeads = sb.direct  || 0;
+
+  // Direct and organic start at 0; user fills them in via editable cells.
+  const oLeads = 0;
+  const dLeads = 0;
   const tLeads = pLeads + oLeads + dLeads;
 
   const spend = tot.spend          || 0;
@@ -370,9 +398,9 @@ function processMonth(d) {
     paid: {
       adSpend:       spend,
       leads:         pLeads,
-      cpl:           pLeads > 0  ? spend / pLeads : null,
+      cpl:           pLeads > 0 ? spend / pLeads : null,
       closedRevenue: rev,
-      roas:          spend > 0   ? rev   / spend  : null,
+      roas:          spend > 0  ? rev   / spend  : null,
       google:        gLeads,
       bing:          bLeads,
     },
@@ -381,48 +409,90 @@ function processMonth(d) {
     total: {
       totalLeads:    tLeads,
       adSpend:       spend,
-      avgCpl:        tLeads > 0  ? spend / tLeads : null,
+      avgCpl:        tLeads > 0 ? spend / tLeads : null,
+      pctPaid:       tLeads > 0 ? pLeads / tLeads : null,
+      pctDirect:     tLeads > 0 ? dLeads / tLeads : null,
+      pctOrganic:    tLeads > 0 ? oLeads / tLeads : null,
       pipelineValue: pipe,
       closedRevenue: rev,
     },
   };
 }
 
-// ── Section / row definitions ────────────────────────────────────────────────
+// ── Section / row definitions ─────────────────────────────────────────────────
+// editable: true  → contenteditable cell, yellow bg, dashed border
+// dataRow: string → data-row attribute for live recalculation targets
 const SECTIONS = [
   {
     key: 'paid', label: 'PAID', css: 'paid',
     rows: [
-      { lbl: 'Ad Spend',       fn: d => fmtM(d.paid.adSpend),       dim: d => !d.paid.adSpend },
-      { lbl: 'Leads',          fn: d => fmtN(d.paid.leads),          dim: d => !d.paid.leads },
-      { lbl: 'Cost Per Lead',  fn: d => fmtM(d.paid.cpl),            dim: d => d.paid.cpl == null },
-      { lbl: 'Closed Revenue', fn: d => fmtM(d.paid.closedRevenue),  dim: d => !d.paid.closedRevenue },
-      { lbl: 'ROAS',           fn: d => fmtX(d.paid.roas),           dim: d => d.paid.roas == null },
+      { lbl: 'Ad Spend',       fn: d => fmtM(d.paid.adSpend),      dim: d => !d.paid.adSpend },
+      { lbl: 'Leads',          fn: d => fmtN(d.paid.leads),         dim: d => !d.paid.leads },
+      { lbl: 'Cost Per Lead',  fn: d => fmtM(d.paid.cpl),           dim: d => d.paid.cpl == null },
+      { lbl: 'Closed Revenue', fn: d => fmtM(d.paid.closedRevenue), dim: d => !d.paid.closedRevenue },
+      { lbl: 'ROAS',           fn: d => fmtX(d.paid.roas),          dim: d => d.paid.roas == null },
     ],
   },
   {
     key: 'direct', label: 'DIRECT', css: 'direct',
     rows: [
-      { lbl: 'Leads', fn: d => fmtN(d.direct.leads), dim: d => !d.direct.leads },
+      { lbl: 'Leads', fn: d => fmtN(d.direct.leads), dim: d => false, editable: true, dataRow: 'direct-leads' },
     ],
   },
   {
     key: 'organic', label: 'ORGANIC', css: 'organic',
     rows: [
-      { lbl: 'Leads', fn: d => fmtN(d.organic.leads), dim: d => !d.organic.leads },
+      { lbl: 'Leads', fn: d => fmtN(d.organic.leads), dim: d => false, editable: true, dataRow: 'organic-leads' },
     ],
   },
   {
     key: 'total', label: 'TOTAL', css: 'total',
     rows: [
-      { lbl: 'Total Leads',    fn: d => fmtN(d.total.totalLeads),    dim: d => !d.total.totalLeads },
+      { lbl: 'Total Leads',    fn: d => fmtN(d.total.totalLeads),    dim: d => !d.total.totalLeads,                 dataRow: 'total-leads' },
+      { lbl: '% Paid',         fn: d => fmtPct(d.total.pctPaid),     dim: d => d.total.pctPaid   == null,           dataRow: 'pct-paid' },
+      { lbl: '% Direct',       fn: d => fmtPct(d.total.pctDirect),   dim: d => d.total.pctDirect == null,           dataRow: 'pct-direct' },
+      { lbl: '% Organic',      fn: d => fmtPct(d.total.pctOrganic),  dim: d => d.total.pctOrganic == null,          dataRow: 'pct-organic' },
       { lbl: 'Total Ad Spend', fn: d => fmtM(d.total.adSpend),       dim: d => !d.total.adSpend },
-      { lbl: 'Avg CPL',        fn: d => fmtM(d.total.avgCpl),        dim: d => d.total.avgCpl == null },
+      { lbl: 'Avg CPL',        fn: d => fmtM(d.total.avgCpl),        dim: d => d.total.avgCpl == null,              dataRow: 'avg-cpl' },
       { lbl: 'Pipeline Value', fn: d => fmtM(d.total.pipelineValue), dim: d => !d.total.pipelineValue },
       { lbl: 'Closed Revenue', fn: d => fmtM(d.total.closedRevenue), dim: d => !d.total.closedRevenue },
     ],
   },
 ];
+
+// ── Live recalculation ────────────────────────────────────────────────────────
+// Called whenever an editable cell changes. Reads current direct/organic values
+// from the DOM, recomputes Total Leads, % splits, and Avg CPL for that column.
+let MONTH_DATA = [];
+
+function recalcCol(colIdx) {
+  const d = MONTH_DATA[colIdx];
+  if (!d) return;
+
+  const get = row => {
+    const el = document.querySelector(`[data-row="${row}"][data-col="${colIdx}"]`);
+    return el ? (parseInt(el.textContent.replace(/[^0-9]/g, ''), 10) || 0) : 0;
+  };
+
+  const set = (row, text, isDim) => {
+    const el = document.querySelector(`[data-row="${row}"][data-col="${colIdx}"]`);
+    if (!el) return;
+    el.textContent = text;
+    el.className   = isDim ? 'dc dim' : 'dc';
+  };
+
+  const dLeads = get('direct-leads');
+  const oLeads = get('organic-leads');
+  const pLeads = d.paid.leads;
+  const tLeads = pLeads + dLeads + oLeads;
+  const spend  = d.paid.adSpend;
+
+  set('total-leads', fmtN(tLeads),                             !tLeads);
+  set('pct-paid',    fmtPct(tLeads ? pLeads / tLeads : null),  !tLeads);
+  set('pct-direct',  fmtPct(tLeads ? dLeads / tLeads : null),  !tLeads);
+  set('pct-organic', fmtPct(tLeads ? oLeads / tLeads : null),  !tLeads);
+  set('avg-cpl',     fmtM(tLeads ? spend / tLeads : null),     !tLeads);
+}
 
 // ── Build table HTML ──────────────────────────────────────────────────────────
 function buildTable(months, data) {
@@ -441,8 +511,8 @@ function buildTable(months, data) {
     sec.rows.forEach((row, ri) => {
       const first = ri === 0;
       const cls = [
-        first && si > 0 ? 's1' : '',
-        ri % 2 === 1    ? 'alt' : '',
+        first && si > 0 ? 's1'    : '',
+        ri % 2 === 1    ? 'alt'   : '',
         sec.key === 'total' ? 'stotal' : '',
       ].filter(Boolean).join(' ');
 
@@ -456,10 +526,25 @@ function buildTable(months, data) {
 
       for (let i = 0; i < months.length; i++) {
         const d = data[i];
-        if (!d) { cells += `<td class="dc dim">—</td>`; continue; }
-        const val = row.fn(d);
+        if (!d) {
+          cells += row.editable
+            ? `<td class="dc editable" contenteditable="true" data-col="${i}" data-row="${row.dataRow}"></td>`
+            : `<td class="dc dim">—</td>`;
+          continue;
+        }
+
+        const val   = row.fn(d);
         const isDim = row.dim(d);
-        cells += `<td class="dc${isDim ? ' dim' : ''}">${val}</td>`;
+
+        if (row.editable) {
+          // Show numeric value (or blank for zero so placeholder is clear)
+          const display = (val === '—') ? '' : val;
+          cells += `<td class="dc editable" contenteditable="true" data-col="${i}" data-row="${row.dataRow}">${display}</td>`;
+        } else if (row.dataRow) {
+          cells += `<td class="dc${isDim ? ' dim' : ''}" data-col="${i}" data-row="${row.dataRow}">${val}</td>`;
+        } else {
+          cells += `<td class="dc${isDim ? ' dim' : ''}">${val}</td>`;
+        }
       }
 
       body += `<tr${cls ? ` class="${cls}"` : ''}>${cells}</tr>`;
@@ -467,6 +552,35 @@ function buildTable(months, data) {
   });
 
   return `<table>${head}<tbody>${body}</tbody></table>`;
+}
+
+// ── Attach editable cell listeners ───────────────────────────────────────────
+function attachEditable() {
+  document.querySelectorAll('.dc.editable').forEach(cell => {
+    const col = parseInt(cell.dataset.col, 10);
+
+    // Select all on focus for easy replacement
+    cell.addEventListener('focus', () => {
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+
+    // Only allow digits; Enter blurs
+    cell.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); cell.blur(); return; }
+      if (e.key === 'Tab') return;
+      if (e.metaKey || e.ctrlKey) return;
+      if (!/^[0-9]$/.test(e.key) && !['Backspace','Delete','ArrowLeft','ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+      }
+    });
+
+    // Recalculate derived cells on every input
+    cell.addEventListener('input', () => recalcCol(col));
+  });
 }
 
 // ── Build KPI sidebar ─────────────────────────────────────────────────────────
@@ -529,14 +643,16 @@ async function init() {
     })
   );
 
-  const data = results.map(r => processMonth(r.status === 'fulfilled' ? r.value : null));
+  MONTH_DATA = results.map(r => processMonth(r.status === 'fulfilled' ? r.value : null));
 
   if (msg) msg.remove();
-  wrap.innerHTML    = buildTable(months, data);
-  sidebar.innerHTML = buildKPIs(data);
+  wrap.innerHTML    = buildTable(months, MONTH_DATA);
+  sidebar.innerHTML = buildKPIs(MONTH_DATA);
+  attachEditable();
 }
 
 function reset() {
+  MONTH_DATA = [];
   document.getElementById('tblWrap').innerHTML  = '<div class="state"><div class="spinner"></div>Refreshing&hellip;</div>';
   document.getElementById('sidebar').innerHTML  = '';
   init();
