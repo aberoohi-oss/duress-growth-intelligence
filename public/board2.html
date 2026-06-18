@@ -65,6 +65,8 @@
     .btn-blue:hover { background: #2563eb; }
     .btn-green       { background: #059669; border-color: #047857; }
     .btn-green:hover { background: #047857; }
+    .btn-navy        { background: #1e293b; border-color: #0f172a; }
+    .btn-navy:hover  { background: #0f172a; }
 
     /* ── Layout ──────────────────────────────────────────────────────────────── */
     .layout { display: flex; flex: 1; overflow: hidden; }
@@ -135,6 +137,8 @@
       position: sticky;
       top: 0;
       z-index: 2;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     th.h-lbl {
@@ -183,6 +187,8 @@
       letter-spacing: 1.5px;
       border-top: 2px solid var(--border);
       border-bottom: 1px solid var(--border);
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     tr.sec-banner.first td { border-top: none; }
@@ -210,6 +216,8 @@
       outline: none;
       min-width: 112px;
       color: var(--text);
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     .ec:focus {
@@ -226,6 +234,8 @@
       background: var(--ac-bg) !important;
       color: var(--ac-txt);
       min-width: 112px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     tr.stotal .lc { font-weight: 600; }
@@ -264,7 +274,7 @@
     <div class="hd-actions">
       <button class="btn" id="btnClear">Clear All</button>
       <button class="btn btn-green" id="btnPDF">&#8659;&ensp;Export PDF</button>
-      <button class="btn btn-blue" id="btnPrint">&#9113;&ensp;Print</button>
+      <button class="btn btn-navy" id="btnPrint">&#9113;&ensp;Print</button>
     </div>
   </header>
 
@@ -285,8 +295,8 @@
         <div class="kpi-val" id="kpi-cpl">—</div>
         <div class="kpi-sub">paid leads, all months</div>
       </div>
-      <div class="kpi" style="--kc:var(--organic)">
-        <div class="kpi-lbl">Top Channel</div>
+      <div class="kpi" id="kpi-platform-card" style="--kc:#4285f4">
+        <div class="kpi-lbl">Top Paid Platform</div>
         <div class="kpi-val" id="kpi-channel">—</div>
       </div>
     </aside>
@@ -440,13 +450,14 @@ function recalcKPIs() {
   setK('kpi-leads', totLeads > 0    ? fmtN(totLeads) : '—');
   setK('kpi-cpl',   avgCpl != null  ? fmtM(avgCpl)   : '—');
 
-  if (totLeads > 0) {
-    const ch  = { Paid: totPaid, Direct: totDir, Organic: totOrg };
-    const top = Object.entries(ch).sort((a, b) => b[1] - a[1])[0][0];
-    const col = { Paid: 'var(--paid)', Direct: 'var(--direct)', Organic: 'var(--organic)' };
-    const el  = document.getElementById('kpi-channel');
-    if (el) { el.textContent = top; el.style.color = col[top]; }
-  }
+  const totGLeads  = DATA.reduce((s, d) => s + d.gLeads,  0);
+  const totMsLeads = DATA.reduce((s, d) => s + d.msLeads, 0);
+  const topPlatform = totGLeads >= totMsLeads ? 'Google' : 'Microsoft';
+  const platformColor = topPlatform === 'Google' ? '#4285f4' : '#00a4ef';
+  const chEl   = document.getElementById('kpi-channel');
+  const cardEl = document.getElementById('kpi-platform-card');
+  if (chEl)   { chEl.textContent = topPlatform; chEl.style.color = platformColor; }
+  if (cardEl) { cardEl.style.setProperty('--kc', platformColor); }
 }
 
 // ── Build table HTML ──────────────────────────────────────────────────────────
@@ -621,9 +632,10 @@ document.getElementById('btnPDF').addEventListener('click', () => {
       .btn    { display: none !important; }
       * { position: static !important; }
       table { width: 100% !important; table-layout: fixed !important; }
-      thead th, tr.sec-banner td, .ec, .ac {
+      * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        color-scheme: light !important;
       }
     }
   `;
