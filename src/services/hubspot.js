@@ -76,6 +76,71 @@ async function getLeads(startDate, endDate) {
  * All deals from the Sales pipeline, optionally filtered by close date range.
  * Returns aggregate revenue stats + per-month closed revenue for time-series.
  */
+async function getPaidOpenPipeline(startTs, endTs, client) {
+  // Contacts created in range with paid attribution (OR across 3 filter groups)
+  const paidContacts = await paginate(
+    opts => client.crm.contacts.searchApi.doSearch(opts),
+    [
+      { filters: [
+        { propertyName: 'createdate',          operator: 'GTE', value: String(startTs) },
+        { propertyName: 'createdate',          operator: 'LTE', value: String(endTs)   },
+        { propertyName: 'utm_source',          operator: 'EQ',  value: 'google'        },
+      ]},
+      { filters: [
+        { propertyName: 'createdate',          operator: 'GTE', value: String(startTs) },
+        { propertyName: 'createdate',          operator: 'LTE', value: String(endTs)   },
+        { propertyName: 'utm_source',          operator: 'EQ',  value: 'bing'          },
+      ]},
+      { filters: [
+        { propertyName: 'createdate',          operator: 'GTE', value: String(startTs) },
+        { propertyName: 'createdate',          operator: 'LTE', value: String(endTs)   },
+        { propertyName: 'hs_analytics_source', operator: 'EQ',  value: 'PAID_SEARCH'  },
+      ]},
+    ],
+    ['createdate']
+  );
+
+  if (!paidContacts.length) return 0;
+  logger.info(`Paid contacts for pipeline lookup: ${paidContacts.length}`);
+
+  // Batch-fetch contact→deal associations (100 per call)
+  const dealIdSet = new Set();
+  for (let i = 0; i < paidContacts.length; i += 100) {
+    const chunk = paidContacts.slice(i, i + 100);
+    const res = await client.crm.associations.batchApi.read('contacts', 'deals', {
+      inputs: chunk.map(c => ({ id: c.id })),
+    });
+    for (const r of (res.results || [])) {
+      for (const t of (r.to || [])) dealIdSet.add(t.id);
+    }
+  }
+
+  if (!dealIdSet.size) return 0;
+
+  // Batch-read deals and sum open pipeline value
+  const dealIds = [...dealIdSet];
+  let paidPipeline = 0;
+  for (let i = 0; i < dealIds.length; i += 100) {
+    const chunk = dealIds.slice(i, i + 100);
+    const res = await client.crm.deals.batchApi.read({
+      inputs: chunk.map(id => ({ id })),
+      properties: ['dealstage', 'pipeline', 'amount'],
+    });
+    for (const d of (res.results || [])) {
+      const p = d.properties;
+      if (
+        p.pipeline === SALES_PIPELINE_ID &&
+        ![CLOSE_WON_STAGE, CLOSE_LOST_STAGE, DISQUALIFIED_STAGE].includes(p.dealstage)
+      ) {
+        paidPipeline += parseFloat(p.amount || 0);
+      }
+    }
+  }
+
+  logger.info(`Paid open pipeline: ${paidPipeline.toFixed(2)} from ${dealIdSet.size} associated deals`);
+  return paidPipeline;
+}
+
 async function getDealRevenue(startDate, endDate) {
   if (!isConfigured()) { logger.warn('HubSpot not configured — skipping deals'); return emptyRevenue(); }
 
@@ -115,8 +180,11 @@ async function getDealRevenue(startDate, endDate) {
       DEAL_PROPERTIES
     );
 
-    const pipelineValue  = openDeals.reduce((s, d) => s + parseFloat(d.properties.amount || 0), 0);
-    const closedRevenue  = wonDeals.reduce((s, d) =>  s + parseFloat(d.properties.amount || 0), 0);
+    // Open pipeline attributed to paid contacts only
+    const paidPipelineValue = await getPaidOpenPipeline(startTs, endTs, client);
+
+    const pipelineValue = openDeals.reduce((s, d) => s + parseFloat(d.properties.amount || 0), 0);
+    const closedRevenue = wonDeals.reduce((s, d) =>  s + parseFloat(d.properties.amount || 0), 0);
 
     // Daily closed revenue for time-series
     const dailyRevenue = {};
@@ -126,16 +194,18 @@ async function getDealRevenue(startDate, endDate) {
     });
 
     logger.info('HubSpot revenue', {
-      openDeals: openDeals.length,
-      wonDeals: wonDeals.length,
-      pipelineValue: pipelineValue.toFixed(2),
-      closedRevenue: closedRevenue.toFixed(2),
+      openDeals:        openDeals.length,
+      wonDeals:         wonDeals.length,
+      pipelineValue:    pipelineValue.toFixed(2),
+      paidPipelineValue: paidPipelineValue.toFixed(2),
+      closedRevenue:    closedRevenue.toFixed(2),
     });
 
     return {
-      openDealCount:  openDeals.length,
-      wonDealCount:   wonDeals.length,
+      openDealCount:    openDeals.length,
+      wonDealCount:     wonDeals.length,
       pipelineValue,
+      paidPipelineValue,
       closedRevenue,
       dailyRevenue,
     };

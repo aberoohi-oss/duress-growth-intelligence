@@ -379,8 +379,9 @@
         <div class="kpi-val" id="kpi-closed">—</div>
       </div>
       <div class="kpi" style="--kc:#6366f1">
-        <div class="kpi-lbl">Pipeline Value</div>
+        <div class="kpi-lbl">Paid Pipeline</div>
         <div class="kpi-val" id="kpi-pipeline">—</div>
+        <div class="kpi-sub">deals from paid contacts</div>
       </div>
       <div class="kpi" id="kpi-platform-card" style="--kc:#4285f4">
         <div class="kpi-lbl">Top Paid Platform</div>
@@ -409,23 +410,23 @@ const DATA = Array.from({ length: N }, () => ({
 
 // ── Seed data (fetched 2026-06-18) ────────────────────────────────────────────
 const SEED = [
-  { gSpend: 15079, gLeads:  33, msSpend: 3053, msLeads:  6, directLeads:  20, organicLeads: 11, pipeline:        0, closed:    4701 }, // FEB 2025
-  { gSpend: 16623, gLeads:  34, msSpend: 1470, msLeads:  6, directLeads:  19, organicLeads:  8, pipeline:        0, closed:   11686 }, // MAR 2025
-  { gSpend: 15200, gLeads:  57, msSpend: 1513, msLeads:  9, directLeads:  21, organicLeads: 14, pipeline:        0, closed:  120682 }, // APR 2025
-  { gSpend: 21266, gLeads:  64, msSpend: 4067, msLeads: 15, directLeads:  47, organicLeads: 18, pipeline:  5025807, closed:  587031 }, // MAY 2025
-  { gSpend: 16949, gLeads:  18, msSpend: 2632, msLeads:  2, directLeads:  28, organicLeads: 19, pipeline:   860220, closed: 5508911 }, // JUN 2025
-  { gSpend: 17972, gLeads:  62, msSpend: 7660, msLeads: 25, directLeads:  70, organicLeads: 18, pipeline:   609163, closed: 2353460 }, // JUL 2025
-  { gSpend: 14837, gLeads:  55, msSpend: 8767, msLeads:  9, directLeads:  63, organicLeads: 16, pipeline:  1920083, closed:  109996 }, // AUG 2025
-  { gSpend: 29516, gLeads:  74, msSpend: 9132, msLeads:  9, directLeads:  52, organicLeads: 19, pipeline:   320011, closed:  260615 }, // SEP 2025
-  { gSpend: 30381, gLeads:  85, msSpend: 9351, msLeads: 11, directLeads:  76, organicLeads: 33, pipeline:  2399738, closed:  268477 }, // OCT 2025
-  { gSpend: 29760, gLeads:  76, msSpend: 7132, msLeads: 21, directLeads:  64, organicLeads: 17, pipeline:  1356629, closed:  625686 }, // NOV 2025
-  { gSpend: 36308, gLeads:  77, msSpend: 4564, msLeads: 12, directLeads:  47, organicLeads: 17, pipeline:   583797, closed:  328630 }, // DEC 2025
-  { gSpend: 37851, gLeads: 105, msSpend: 4550, msLeads:  9, directLeads:  62, organicLeads: 18, pipeline:   136779, closed:  101558 }, // JAN 2026
-  { gSpend: 39894, gLeads: 123, msSpend: 4461, msLeads: 18, directLeads:  57, organicLeads: 18, pipeline:  1030053, closed:  413831 }, // FEB 2026
-  { gSpend: 41040, gLeads:  95, msSpend: 4404, msLeads: 14, directLeads:  51, organicLeads: 13, pipeline:  3516925, closed:  314858 }, // MAR 2026
-  { gSpend: 41034, gLeads:  87, msSpend: 4532, msLeads: 18, directLeads:  83, organicLeads: 11, pipeline: 10575539, closed:  337571 }, // APR 2026
-  { gSpend: 40449, gLeads:  97, msSpend: 4565, msLeads: 18, directLeads: 113, organicLeads: 12, pipeline:  2261120, closed:  478338 }, // MAY 2026
-  { gSpend: 24286, gLeads:  59, msSpend: 2344, msLeads: 14, directLeads:  48, organicLeads:  9, pipeline:  1361021, closed: 1242424 }, // JUN 2026
+  { gSpend: 15079, gLeads:  33, msSpend: 3053, msLeads:  6, directLeads:  20, organicLeads: 11, pipeline:  28394, closed:    4701 }, // FEB 2025
+  { gSpend: 16623, gLeads:  34, msSpend: 1470, msLeads:  6, directLeads:  19, organicLeads:  8, pipeline:  21301, closed:   11686 }, // MAR 2025
+  { gSpend: 15200, gLeads:  57, msSpend: 1513, msLeads:  9, directLeads:  21, organicLeads: 14, pipeline:  15544, closed:  120682 }, // APR 2025
+  { gSpend: 21266, gLeads:  64, msSpend: 4067, msLeads: 15, directLeads:  47, organicLeads: 18, pipeline:  68011, closed:  587031 }, // MAY 2025
+  { gSpend: 16949, gLeads:  18, msSpend: 2632, msLeads:  2, directLeads:  28, organicLeads: 19, pipeline:  10510, closed: 5508911 }, // JUN 2025
+  { gSpend: 17972, gLeads:  62, msSpend: 7660, msLeads: 25, directLeads:  70, organicLeads: 18, pipeline: 161800, closed: 2353460 }, // JUL 2025
+  { gSpend: 14837, gLeads:  55, msSpend: 8767, msLeads:  9, directLeads:  63, organicLeads: 16, pipeline:  14319, closed:  109996 }, // AUG 2025
+  { gSpend: 29516, gLeads:  74, msSpend: 9132, msLeads:  9, directLeads:  52, organicLeads: 19, pipeline: 290692, closed:  260615 }, // SEP 2025
+  { gSpend: 30381, gLeads:  85, msSpend: 9351, msLeads: 11, directLeads:  76, organicLeads: 33, pipeline: 128358, closed:  268477 }, // OCT 2025
+  { gSpend: 29760, gLeads:  76, msSpend: 7132, msLeads: 21, directLeads:  64, organicLeads: 17, pipeline:  70014, closed:  625686 }, // NOV 2025
+  { gSpend: 36308, gLeads:  77, msSpend: 4564, msLeads: 12, directLeads:  47, organicLeads: 17, pipeline: 192958, closed:  328630 }, // DEC 2025
+  { gSpend: 37851, gLeads: 105, msSpend: 4550, msLeads:  9, directLeads:  62, organicLeads: 18, pipeline:  61329, closed:  101558 }, // JAN 2026
+  { gSpend: 39894, gLeads: 123, msSpend: 4461, msLeads: 18, directLeads:  57, organicLeads: 18, pipeline: 754324, closed:  413831 }, // FEB 2026
+  { gSpend: 41040, gLeads:  95, msSpend: 4404, msLeads: 14, directLeads:  51, organicLeads: 13, pipeline: 323468, closed:  314858 }, // MAR 2026
+  { gSpend: 41034, gLeads:  87, msSpend: 4532, msLeads: 18, directLeads:  83, organicLeads: 11, pipeline: 130890, closed:  337571 }, // APR 2026
+  { gSpend: 40449, gLeads:  97, msSpend: 4565, msLeads: 18, directLeads: 113, organicLeads: 12, pipeline: 106516, closed:  478338 }, // MAY 2026
+  { gSpend: 24286, gLeads:  59, msSpend: 2344, msLeads: 14, directLeads:  48, organicLeads:  9, pipeline:  54725, closed: 1242424 }, // JUN 2026
 ];
 
 // ── Formatters ────────────────────────────────────────────────────────────────
@@ -463,7 +464,7 @@ const SECTIONS = [
       { lbl: 'Total Ad Spend',  key: 'paidSpend', edit: false },
       { lbl: 'Total Leads',     key: 'paidLeads', edit: false },
       { lbl: 'Avg CPL',         key: 'paidCpl',   edit: false },
-      { lbl: 'Pipeline Value',  key: 'pipeline',  edit: true  },
+      { lbl: 'Paid Pipeline',   key: 'pipeline',  edit: true  },
       { lbl: 'Closed Revenue',  key: 'closed',    edit: true  },
       { lbl: 'ROAS',            key: 'roas',      edit: false },
       { lbl: 'ROI',             key: 'roi',       edit: false },
@@ -490,7 +491,7 @@ const SECTIONS = [
       { lbl: '% Paid',         key: 'pctPaid',      edit: false },
       { lbl: '% Direct',       key: 'pctDirect',    edit: false },
       { lbl: '% Organic',      key: 'pctOrganic',   edit: false },
-      { lbl: 'Pipeline Value', key: 'totalPipeline',edit: false },
+      { lbl: 'Paid Pipeline',  key: 'totalPipeline',edit: false },
       { lbl: 'Closed Revenue', key: 'totalClosed',  edit: false },
       { lbl: 'ROAS',           key: 'totalRoas',    edit: false },
       { lbl: 'ROI',            key: 'totalRoi',     edit: false },
