@@ -321,6 +321,27 @@ const DATA = Array.from({ length: N }, () => ({
   adSpend: 0, paidLeads: 0, directLeads: 0, organicLeads: 0,
 }));
 
+// ── Seed data (fetched 2026-06-18) ────────────────────────────────────────────
+const SEED = [
+  { adSpend: 18132, paidLeads: 39,  directLeads: 20,  organicLeads: 11 }, // FEB 2025
+  { adSpend: 18093, paidLeads: 40,  directLeads: 19,  organicLeads:  8 }, // MAR 2025
+  { adSpend: 16712, paidLeads: 66,  directLeads: 21,  organicLeads: 14 }, // APR 2025
+  { adSpend: 25333, paidLeads: 79,  directLeads: 47,  organicLeads: 18 }, // MAY 2025
+  { adSpend: 19581, paidLeads: 56,  directLeads: 28,  organicLeads: 19 }, // JUN 2025
+  { adSpend: 25631, paidLeads: 87,  directLeads: 70,  organicLeads: 18 }, // JUL 2025
+  { adSpend: 23604, paidLeads: 64,  directLeads: 63,  organicLeads: 16 }, // AUG 2025
+  { adSpend: 38648, paidLeads: 83,  directLeads: 52,  organicLeads: 19 }, // SEP 2025
+  { adSpend: 39732, paidLeads: 96,  directLeads: 76,  organicLeads: 33 }, // OCT 2025
+  { adSpend: 36892, paidLeads: 97,  directLeads: 64,  organicLeads: 17 }, // NOV 2025
+  { adSpend: 40872, paidLeads: 89,  directLeads: 47,  organicLeads: 17 }, // DEC 2025
+  { adSpend: 42400, paidLeads: 114, directLeads: 62,  organicLeads: 18 }, // JAN 2026
+  { adSpend: 44356, paidLeads: 141, directLeads: 57,  organicLeads: 18 }, // FEB 2026
+  { adSpend: 45444, paidLeads: 109, directLeads: 51,  organicLeads: 13 }, // MAR 2026
+  { adSpend: 45565, paidLeads: 105, directLeads: 83,  organicLeads: 11 }, // APR 2026
+  { adSpend: 45015, paidLeads: 115, directLeads: 113, organicLeads: 12 }, // MAY 2026
+  { adSpend: 26630, paidLeads: 72,  directLeads: 48,  organicLeads:  9 }, // JUN 2026
+];
+
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmtM = v => {
   if (!v) return '—';
@@ -513,6 +534,27 @@ function clearAll() {
   if (ch) { ch.textContent = '—'; ch.style.color = ''; }
 }
 
+// ── Populate from seed ────────────────────────────────────────────────────────
+function populate() {
+  SEED.forEach((s, ci) => {
+    DATA[ci].adSpend      = s.adSpend;
+    DATA[ci].paidLeads    = s.paidLeads;
+    DATA[ci].directLeads  = s.directLeads;
+    DATA[ci].organicLeads = s.organicLeads;
+
+    const setCell = (key, val, money) => {
+      const el = document.querySelector(`.ec[data-key="${key}"][data-col="${ci}"]`);
+      if (el) el.textContent = val > 0 ? (money ? fmtM(val) : fmtN(val)) : '';
+    };
+    setCell('adSpend',      s.adSpend,      true);
+    setCell('paidLeads',    s.paidLeads,    false);
+    setCell('directLeads',  s.directLeads,  false);
+    setCell('organicLeads', s.organicLeads, false);
+
+    recalcCol(ci);
+  });
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 (function init() {
   const wrap = document.getElementById('tblWrap');
@@ -531,6 +573,7 @@ function clearAll() {
 
   wrap.innerHTML = legend + buildTable();
   attachEditable();
+  populate();
 })();
 
 document.getElementById('btnPrint').addEventListener('click', () => window.print());
